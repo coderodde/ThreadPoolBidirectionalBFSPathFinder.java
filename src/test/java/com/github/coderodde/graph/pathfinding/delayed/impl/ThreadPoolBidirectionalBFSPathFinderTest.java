@@ -1,7 +1,9 @@
 package com.github.coderodde.graph.pathfinding.delayed.impl;
 
+import com.github.coderodde.graph.extra.BackwardNodeExpander;
 import com.github.coderodde.graph.extra.DirectedGraphBuilder;
 import com.github.coderodde.graph.extra.DirectedGraphNode;
+import com.github.coderodde.graph.extra.ForwardNodeExpander;
 import com.github.coderodde.graph.extra.GraphPair;
 import com.github.coderodde.graph.extra.ReferencePathFinder;
 import com.github.coderodde.graph.extra.Utils;
@@ -288,36 +290,6 @@ final class FailingBackwardNodeExpander
     public List<DirectedGraphNode>
          generateSuccessors(final DirectedGraphNode node) {
         Utils.sleep(1_000_000);
-        return node.getParents();
-    }
-
-    @Override
-    public boolean isValidNode(final DirectedGraphNode node) {
-        return true;
-    }
-}
-
-final class ForwardNodeExpander
-        extends AbstractNodeExpander<DirectedGraphNode> {
-
-    @Override
-    public List<DirectedGraphNode> 
-        generateSuccessors(final DirectedGraphNode node) {
-        return node.getChildren();
-    }
-
-    @Override
-    public boolean isValidNode(final DirectedGraphNode node) {
-        return true;
-    }
-}
-
-final class BackwardNodeExpander
-        extends AbstractNodeExpander<DirectedGraphNode> {
-
-    @Override
-    public List<DirectedGraphNode> 
-        generateSuccessors(final DirectedGraphNode node) {
         return node.getParents();
     }
 

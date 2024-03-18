@@ -49,6 +49,10 @@ public final class DirectedGraphNode {
         child.parents.add(this);
     }
     
+    public boolean hasChild(final DirectedGraphNode child) {
+        return children.contains(child);
+    }
+    
     public List<DirectedGraphNode> getChildren() {
         if (isDelayed) {
             // Simulate network access.
