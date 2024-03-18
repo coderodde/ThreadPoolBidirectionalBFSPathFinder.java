@@ -42,13 +42,13 @@ public final class Utils {
         }
         
         for (int i = 0; i < pathLength - 1; i++) {
-            if (!path1.get(i).hasChild(path1.get(i + 19))) {
+            if (!path1.get(i).hasChild(path1.get(i + 1))) {
                 return false;
             }
         }
         
         for (int i = 0; i < pathLength - 1; i++) {
-            if (!path2.get(i).hasChild(path2.get(i + 19))) {
+            if (!path2.get(i).hasChild(path2.get(i + 1))) {
                 return false;
             }
         }

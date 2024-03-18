@@ -35,6 +35,9 @@ public final class Benchmark {
         DirectedGraphNode source = Utils.choose(graphPair.delayedGraph, random);
         DirectedGraphNode target = Utils.choose(graphPair.delayedGraph, random);
         
+        System.out.printf("Source node: %s\n", source);
+        System.out.printf("Target node: %s\n", target);
+        
         long startTime = System.currentTimeMillis();
         
         List<DirectedGraphNode> referencePath = 
@@ -50,11 +53,11 @@ public final class Benchmark {
                 threadPoolPathFinder = 
                 ThreadPoolBidirectionalBFSPathFinderBuilder
                         .<DirectedGraphNode>begin()
-                        .withJoinDurationMillis(1000)
+                        .withJoinDurationMillis(110)
                         .withLockWaitMillis(4)
                         .withMasterThreadSleepDurationMillis(100)
                         .withNumberOfMasterTrials(50)
-                        .withNumberOfRequestedThreads(16)
+                        .withNumberOfRequestedThreads(128)
                         .withSlaveThreadSleepDurationMillis(200)
                         .end();
         
@@ -80,35 +83,33 @@ public final class Benchmark {
         
         System.out.printf("Paths are equivalent: %b.\n", eq);
         
-        if (!eq) {
-            String format1 =
-                    "%" + Integer.toString(referencePath.size()).length()
-                    + "d: %d\n";
-            
-            String format2 =
-                    "%" 
-                    + Integer.toString(threadPoolFinderPath.size()).length()
-                    + "d: %d\n";
-            
-            System.out.println("Reference finder path:");
-            int lineNumber = 1;
-            
-            for (int i = 0; i < referencePath.size(); i++) {
-                System.out.printf(format1, 
-                                  lineNumber++, 
-                                  referencePath.get(i).getId());
-            }
-            
-            System.out.println();
-            System.out.println("Thread pool finder path:");
-            
-            lineNumber = 1;
-            
-            for (int i = 0; i < threadPoolFinderPath.size(); i++) {
-                System.out.printf(format2,
-                                  lineNumber++, 
-                                  threadPoolFinderPath.get(i).getId());
-            }
+        String format1 =
+                "%" + Integer.toString(referencePath.size()).length()
+                + "d: %d\n";
+
+        String format2 =
+                "%" 
+                + Integer.toString(threadPoolFinderPath.size()).length()
+                + "d: %d\n";
+
+        System.out.println("Reference finder path:");
+        int lineNumber = 1;
+
+        for (int i = 0; i < referencePath.size(); i++) {
+            System.out.printf(format1, 
+                              lineNumber++, 
+                              referencePath.get(i).getId());
+        }
+
+        System.out.println();
+        System.out.println("Thread pool finder path:");
+
+        lineNumber = 1;
+
+        for (int i = 0; i < threadPoolFinderPath.size(); i++) {
+            System.out.printf(format2,
+                              lineNumber++, 
+                              threadPoolFinderPath.get(i).getId());
         }
     }
 }
