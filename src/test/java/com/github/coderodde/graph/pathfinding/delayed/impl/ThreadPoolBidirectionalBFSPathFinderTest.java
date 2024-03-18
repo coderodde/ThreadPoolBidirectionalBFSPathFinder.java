@@ -27,7 +27,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     private static final int MASTER_THREAD_SLEEP_DURATION = 10;
     private static final int SLAVE_THREAD_SLEEP_DURATION = 20;
     private static final int MASTER_THREAD_TRIALS = 20;
-    private static final int EXPANSION_JOIN_DURATION_MILLIS = 2000;
+    private static final int EXPANSION_JOIN_DURATION_MILLIS = 200;
     private static final int ITERATIONS = 10;
     private static final int LOCK_WAIT_DURATION_MILLIS = 3;
     
@@ -43,14 +43,14 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     private final AbstractDelayedGraphPathFinder<DirectedGraphNode> 
             testPathFinder = 
                 ThreadPoolBidirectionalBFSPathFinderBuilder
-                .<DirectedGraphNode>build()
+                .<DirectedGraphNode>begin()
                 .withNumberOfRequestedThreads(REQUESTED_NUMBER_OF_THREADS)
                 .withMasterThreadSleepDurationMillis(MASTER_THREAD_SLEEP_DURATION)
                 .withSlaveThreadSleepDurationMillis(SLAVE_THREAD_SLEEP_DURATION)
                 .withNumberOfMasterTrials(MASTER_THREAD_TRIALS)
                 .withJoinDurationMillis(EXPANSION_JOIN_DURATION_MILLIS)
                 .withLockWaitMillis(LOCK_WAIT_DURATION_MILLIS)
-                .build();
+                .end();
     
     private final ReferencePathFinder referencePathFinder =
             new ReferencePathFinder();
@@ -226,21 +226,23 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     }
     
     @Test
-    public void omitsFaultyNode() {
+    public void omitsFaultyLinks() {
         final DirectedGraphNode a  = new DirectedGraphNode(1, true, 100);
         final DirectedGraphNode b1 = new DirectedGraphNode(2, true, 100);
         final DirectedGraphNode b2 = new DirectedGraphNode(3, true, 100);
         final DirectedGraphNode b3 = new DirectedGraphNode(4, true, 100);
-        final DirectedGraphNode c  = new DirectedGraphNode(5, true, 10_000);
-        final DirectedGraphNode d  = new DirectedGraphNode(6, true, 100);
+        final DirectedGraphNode c1 = new DirectedGraphNode(5, true, 10_000);
+        final DirectedGraphNode c2 = new DirectedGraphNode(6, true, 10_000);
+        final DirectedGraphNode d  = new DirectedGraphNode(7, true, 100);
         
         a.addChild(b1);
         b1.addChild(b2);
         b2.addChild(b3);
         b3.addChild(d);
         
-        a.addChild(c);
-        c.addChild(d);
+        a.addChild(c1);
+        c1.addChild(c2);
+        c2.addChild(d);
         
         final List<DirectedGraphNode> path = 
                 testPathFinder.search(
