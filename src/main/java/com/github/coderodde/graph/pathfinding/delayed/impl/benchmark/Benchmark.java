@@ -57,7 +57,7 @@ public final class Benchmark {
                         .withLockWaitMillis(4)
                         .withMasterThreadSleepDurationMillis(100)
                         .withNumberOfMasterTrials(50)
-                        .withNumberOfRequestedThreads(128)
+                        .withNumberOfRequestedThreads(1024)
                         .withSlaveThreadSleepDurationMillis(200)
                         .end();
         

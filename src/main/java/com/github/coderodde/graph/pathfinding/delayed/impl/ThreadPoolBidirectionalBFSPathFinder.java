@@ -1,6 +1,5 @@
 package com.github.coderodde.graph.pathfinding.delayed.impl;
 
-import com.github.coderodde.graph.extra.DirectedGraphNode;
 import com.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
 import com.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import com.github.coderodde.graph.pathfinding.delayed.ProgressLogger;
@@ -107,19 +106,20 @@ extends AbstractDelayedGraphPathFinder<N> {
     static final int MINIMUM_LOCK_WAIT_MILLIS = 1;
 
     /**
-     * Caches the requested number of threads to use in the each search process.
+     * Caches the requested number of threads to use in the search process. This
+     * field accounts for both forward and backward search direction.
      */
     private final int numberOfThreads;
 
     /**
      * The duration of sleeping in milliseconds for the master threads.
      */
-    private final int masterThreadSleepDuration;
+    private final int masterThreadSleepDurationMillis;
 
     /**
      * The duration of sleeping in milliseconds for the slave threads.
      */
-    private final int slaveThreadSleepDuration;
+    private final int slaveThreadSleepDurationMillis;
 
     /**
      * While a master thread waits the frontier queue to become non-empty, the
@@ -131,12 +131,12 @@ extends AbstractDelayedGraphPathFinder<N> {
     /**
      * The maximum number of milliseconds for waiting the expansion thread.
      */
-    private final int expansionJoinDuration;
+    private final int expansionJoinDurationMillis;
     
     /**
      * The maximum number of milliseconds to wait for the lock.
      */
-    private final int lockWaitDuration;
+    private final int lockWaitDurationMillis;
     
     /**
      * The logging facility used to log abnormal activity.
@@ -150,48 +150,51 @@ extends AbstractDelayedGraphPathFinder<N> {
     /**
      * Constructs this path finder.
      * 
-     * @param requestedNumberOfThreads  the requested number of search threads.
-     * @param masterThreadSleepDuration the number of milliseconds a master 
+     * @param numberOfThreads  the requested number of search threads.
+     * @param masterThreadSleepDurationMillis the number of milliseconds a master 
      *                                  thread sleeps whenever it discovers the
      *                                  frontier queue being empty.
-     * @param slaveThreadSleepDuration  the number of milliseconds a slave
+     * @param slaveThreadSleepDurationMillis  the number of milliseconds a slave
      *                                  thread sleeps whenever it discovers the
      *                                  frontier queue being empty.
      * @param masterThreadTrials        the number of times the master thread
      *                                  hibernates itself before terminating the
      *                                  entire search.
-     * @param expansionThreadJoinDuration the number of milliseconds to wait for
-     *                                    the expansion thread.
-     * @param lockWaitDuration the number of milliseconds to wait for the lock.
+     * @param expansionThreadJoinDurationMillis the number of milliseconds to 
+     *                                          wait for the expansion thread.
+     * @param lockWaitDurationMillis the number of milliseconds to wait for 
+     *                               the lock.
      */
     public ThreadPoolBidirectionalBFSPathFinder(
-            final int requestedNumberOfThreads,
-            final int masterThreadSleepDuration,
-            final int slaveThreadSleepDuration,
+            final int numberOfThreads,
+            final int masterThreadSleepDurationMillis,
+            final int slaveThreadSleepDurationMillis,
             final int masterThreadTrials,
-            final int expansionThreadJoinDuration,
-            final int lockWaitDuration) {
+            final int expansionThreadJoinDurationMillis,
+            final int lockWaitDurationMillis) {
         
-        this.numberOfThreads = Math.max(requestedNumberOfThreads, 
+        this.numberOfThreads = Math.max(numberOfThreads, 
                                         MINIMUM_NUMBER_OF_THREADS);
 
-        this.masterThreadSleepDuration = 
-                Math.max(masterThreadSleepDuration,
+        this.masterThreadSleepDurationMillis = 
+                Math.max(masterThreadSleepDurationMillis,
                          MINIMUM_MASTER_THREAD_SLEEP_DURATION_MILLIS);
 
-        this.slaveThreadSleepDuration = 
-                Math.max(slaveThreadSleepDuration,
+        this.slaveThreadSleepDurationMillis = 
+                Math.max(slaveThreadSleepDurationMillis,
                          MINIMUM_SLAVE_THREAD_SLEEP_DURATION_MILLIS);
 
         this.masterThreadTrials = 
                 Math.max(masterThreadTrials,
                          MINIMUM_NUMBER_OF_TRIALS);
         
-        this.expansionJoinDuration = Math.max(expansionThreadJoinDuration,
-                                              MINIMUM_EXPANSION_JOIN_DURATION_MILLIS);
+        this.expansionJoinDurationMillis = 
+                Math.max(expansionThreadJoinDurationMillis,
+                         MINIMUM_EXPANSION_JOIN_DURATION_MILLIS);
         
-        this.lockWaitDuration = Math.max(lockWaitDuration,
-                                         MINIMUM_LOCK_WAIT_MILLIS);
+        this.lockWaitDurationMillis = 
+                Math.max(lockWaitDurationMillis,
+                         MINIMUM_LOCK_WAIT_MILLIS);
     }
 
     /**
@@ -270,7 +273,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 new SharedSearchState<>(source, 
                                         target, 
                                         sharedSearchProgressLogger,
-                                        lockWaitDuration);
+                                        lockWaitDurationMillis);
 
         // Create the state obj6/ect shared by all the threads working on forward
         // search direction:
@@ -303,9 +306,9 @@ extends AbstractDelayedGraphPathFinder<N> {
                                           sharedSearchState,
                                           true,
                                           forwardSearchProgressLogger,
-                                          masterThreadSleepDuration,
+                                          masterThreadSleepDurationMillis,
                                           masterThreadTrials,
-                                          expansionJoinDuration);
+                                          expansionJoinDurationMillis);
 
         // Spawn the forward search master thread:
         forwardSearchState.introduceThread(forwardSearchThreads[0]);           
@@ -321,9 +324,9 @@ extends AbstractDelayedGraphPathFinder<N> {
                                               sharedSearchState,
                                               false,
                                               forwardSearchProgressLogger,
-                                              slaveThreadSleepDuration,
+                                              slaveThreadSleepDurationMillis,
                                               masterThreadTrials,
-                                              expansionJoinDuration);
+                                              expansionJoinDurationMillis);
 
             forwardSearchState.introduceThread(forwardSearchThreads[i]);
             forwardSearchThreads[i].start();
@@ -342,9 +345,9 @@ extends AbstractDelayedGraphPathFinder<N> {
                                            sharedSearchState,
                                            true,
                                            backwardSearchProgressLogger,
-                                           masterThreadSleepDuration,
+                                           masterThreadSleepDurationMillis,
                                            masterThreadTrials,
-                                           expansionJoinDuration);
+                                           expansionJoinDurationMillis);
 
         // Spawn the backward search master thread:
         backwardSearchState.introduceThread(backwardSearchThreads[0]);
@@ -360,9 +363,9 @@ extends AbstractDelayedGraphPathFinder<N> {
                                                sharedSearchState,
                                                false,
                                                backwardSearchProgressLogger,
-                                               slaveThreadSleepDuration,
+                                               slaveThreadSleepDurationMillis,
                                                masterThreadTrials,
-                                               expansionJoinDuration);
+                                               expansionJoinDurationMillis);
 
             backwardSearchState.introduceThread(backwardSearchThreads[i]);
             backwardSearchThreads[i].start();
@@ -852,6 +855,8 @@ extends AbstractDelayedGraphPathFinder<N> {
          * threads may be joined.
          */
         void requestThreadsToExit() {
+            threadSetsMutex.acquireUninterruptibly();
+            
             for (final StoppableThread thread : runningThreadSet) {
                 thread.requestThreadToExit();
             }
@@ -859,6 +864,8 @@ extends AbstractDelayedGraphPathFinder<N> {
             for (final StoppableThread thread : sleepingThreadSet) {
                 thread.requestThreadToExit();
             }
+            
+            threadSetsMutex.release();
         }
     }
 

@@ -264,7 +264,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         assertEquals(b3, path.get(3));
         assertEquals(d,  path.get(4));
         
-        System.out.println("omitsFaultyNode() done.");
+        System.out.println("omitsFaultyLinks() done.");
     }
 }
 
