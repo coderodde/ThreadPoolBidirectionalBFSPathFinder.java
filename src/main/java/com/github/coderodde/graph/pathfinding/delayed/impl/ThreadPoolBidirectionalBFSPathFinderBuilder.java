@@ -35,7 +35,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderBuilder<N> {
     }
     
     public static <N> Builder<N> begin() {
-        return new Builder<N>();
+        return new Builder<>();
     }
     
     public static final class Builder<N> {

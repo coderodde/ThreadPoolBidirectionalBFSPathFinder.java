@@ -1,7 +1,9 @@
 package com.github.coderodde.graph.pathfinding.delayed.impl;
 
+import com.github.coderodde.graph.extra.BackwardNodeExpander;
 import com.github.coderodde.graph.extra.DirectedGraphBuilder;
 import com.github.coderodde.graph.extra.DirectedGraphNode;
+import com.github.coderodde.graph.extra.ForwardNodeExpander;
 import com.github.coderodde.graph.extra.GraphPair;
 import com.github.coderodde.graph.extra.ReferencePathFinder;
 import com.github.coderodde.graph.extra.Utils;
@@ -226,21 +228,23 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     }
     
     @Test
-    public void omitsFaultyNode() {
+    public void omitsFaultyLinks() {
         final DirectedGraphNode a  = new DirectedGraphNode(1, true, 100);
         final DirectedGraphNode b1 = new DirectedGraphNode(2, true, 100);
         final DirectedGraphNode b2 = new DirectedGraphNode(3, true, 100);
         final DirectedGraphNode b3 = new DirectedGraphNode(4, true, 100);
-        final DirectedGraphNode c  = new DirectedGraphNode(5, true, 1_000_000);
-        final DirectedGraphNode d  = new DirectedGraphNode(6, true, 100);
+        final DirectedGraphNode c1 = new DirectedGraphNode(5, true, 10_000);
+        final DirectedGraphNode c2 = new DirectedGraphNode(6, true, 10_000);
+        final DirectedGraphNode d  = new DirectedGraphNode(7, true, 100);
         
         a.addChild(b1);
         b1.addChild(b2);
         b2.addChild(b3);
         b3.addChild(d);
         
-        a.addChild(c);
-        c.addChild(d);
+        a.addChild(c1);
+        c1.addChild(c2);
+        c2.addChild(d);
         
         final List<DirectedGraphNode> path = 
                 testPathFinder.search(
@@ -286,36 +290,6 @@ final class FailingBackwardNodeExpander
     public List<DirectedGraphNode>
          generateSuccessors(final DirectedGraphNode node) {
         Utils.sleep(1_000_000);
-        return node.getParents();
-    }
-
-    @Override
-    public boolean isValidNode(final DirectedGraphNode node) {
-        return true;
-    }
-}
-
-final class ForwardNodeExpander
-        extends AbstractNodeExpander<DirectedGraphNode> {
-
-    @Override
-    public List<DirectedGraphNode> 
-        generateSuccessors(final DirectedGraphNode node) {
-        return node.getChildren();
-    }
-
-    @Override
-    public boolean isValidNode(final DirectedGraphNode node) {
-        return true;
-    }
-}
-
-final class BackwardNodeExpander
-        extends AbstractNodeExpander<DirectedGraphNode> {
-
-    @Override
-    public List<DirectedGraphNode> 
-        generateSuccessors(final DirectedGraphNode node) {
         return node.getParents();
     }
 

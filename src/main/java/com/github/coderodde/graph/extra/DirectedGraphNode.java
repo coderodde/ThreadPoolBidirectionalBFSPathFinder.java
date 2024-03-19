@@ -40,9 +40,17 @@ public final class DirectedGraphNode {
         this.delayMilliseconds = delayMilliseconds;
     }
     
+    public int getId() {
+        return id;
+    }
+    
     public void addChild(final DirectedGraphNode child) {
         children.add(child);
         child.parents.add(this);
+    }
+    
+    public boolean hasChild(final DirectedGraphNode child) {
+        return children.contains(child);
     }
     
     public List<DirectedGraphNode> getChildren() {
