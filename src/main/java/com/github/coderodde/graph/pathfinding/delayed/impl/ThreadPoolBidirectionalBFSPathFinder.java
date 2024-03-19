@@ -3,20 +3,6 @@ package com.github.coderodde.graph.pathfinding.delayed.impl;
 import com.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
 import com.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import com.github.coderodde.graph.pathfinding.delayed.ProgressLogger;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.Semaphore;
-import java.util.logging.Logger;
-import java.util.logging.Level;
-import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -28,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -664,13 +649,19 @@ extends AbstractDelayedGraphPathFinder<N> {
          * The set of all the threads working on this particular direction.
          */
         private final Set<AbstractSearchThread<N>> runningThreadSet = 
-                Collections.synchronizedSet(new HashSet<>());
+                new HashSet<>();
 
         /**
          * The set of all <b>slave</b> threads that are currently sleeping.
          */
         private final Set<AbstractSearchThread<N>> sleepingThreadSet =
-                Collections.synchronizedSet(new HashSet<>());
+                new HashSet<>();
+        
+        /**
+         * The semaphore protecting the {@code runningThreadSet} and
+         * {@code sleepingThreadSet}.
+         */
+        private final Semaphore mutex = new Semaphore(1, true);
 
         /**
          * Constructs the search state object.
@@ -715,6 +706,14 @@ extends AbstractDelayedGraphPathFinder<N> {
             return parents.get(node);
         }
         
+        void lockThreadSetMutex() {
+            mutex.acquireUninterruptibly();
+        }
+        
+        void unlockThreadSetMutex() {
+            mutex.release();
+        }
+        
         /**
          * Tries to set the new node in the data structures.
          * 
@@ -754,8 +753,10 @@ extends AbstractDelayedGraphPathFinder<N> {
          * @param thread the thread to introduce.
          */
         void introduceThread(final AbstractSearchThread<N> thread) {
+            lockThreadSetMutex();
             thread.putThreadToSleep(false);
             runningThreadSet.add(thread);
+            unlockThreadSetMutex();
         }
 
         /**
@@ -766,20 +767,25 @@ extends AbstractDelayedGraphPathFinder<N> {
          */
         void putThreadToSleep(final AbstractSearchThread<N> thread) {
             thread.putThreadToSleep(true);
+            lockThreadSetMutex();
             runningThreadSet.remove(thread);
             sleepingThreadSet.add(thread);
+            unlockThreadSetMutex();
         }
         
         /**
          * Wakes up all the sleeping slave threads.
          */
         void wakeupAllSleepingThreads() { 
+            lockThreadSetMutex();
+            
             for (final AbstractSearchThread<N> thread : sleepingThreadSet) {
                 thread.putThreadToSleep(false);
                 runningThreadSet.add(thread);
             }
             
             sleepingThreadSet.clear();
+            unlockThreadSetMutex();
         }
 
         /**
@@ -1121,6 +1127,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             expansionThread.start();
             
             try {
+                
                 expansionThread.join(expansionJoinDuration);
             } catch (InterruptedException ex) {
                 LOGGER.log(Level.WARNING, 

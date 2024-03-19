@@ -34,7 +34,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderBuilder<N> {
         int lockWaitMillis = DEFAULT_LOCK_WAIT_MILLIS;
     }
     
-    public static <N> Builder<N> build() {
+    public static <N> Builder<N> begin() {
         return new Builder<N>();
     }
     
@@ -96,7 +96,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderBuilder<N> {
             return this;
         }
         
-        public ThreadPoolBidirectionalBFSPathFinder<N> build() {
+        public ThreadPoolBidirectionalBFSPathFinder<N> end() {
             return new ThreadPoolBidirectionalBFSPathFinder<>(
                     settings.numberOfRequestedThreads,
                     settings.masterThreadSleepDurationMillis,
