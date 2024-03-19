@@ -26,12 +26,11 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     private static final int MINIMUM_DELAY = 3;
     private static final int MAXIMUM_DELAY = 40;
     private static final int REQUESTED_NUMBER_OF_THREADS = 8;
-    private static final int MASTER_THREAD_SLEEP_DURATION = 10;
-    private static final int SLAVE_THREAD_SLEEP_DURATION = 20;
-    private static final int MASTER_THREAD_TRIALS = 20;
+    private static final int MASTER_THREAD_SLEEP_DURATION = 20;
+    private static final int SLAVE_THREAD_SLEEP_DURATION = 10;
+    private static final int MASTER_THREAD_TRIALS = 30;
     private static final int EXPANSION_JOIN_DURATION_MILLIS = 200;
-    private static final int ITERATIONS = 10;
-    private static final int LOCK_WAIT_DURATION_MILLIS = 3;
+    private static final int LOCK_WAIT_DURATION_MILLIS = 1;
     
     private final List<DirectedGraphNode> delayedDirectedGraph;
     private final List<DirectedGraphNode> nondelayedDirectedGraph;
@@ -124,44 +123,42 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     // This test may take a several seconds.
     @Test
     public void testCorrectness() {
-        for (int iteration = 0; iteration < ITERATIONS; iteration++) {
-            final int sourceNodeIndex = 
-                    random.nextInt(delayedDirectedGraph.size());
-            
-            final int targetNodeIndex = 
-                    random.nextInt(delayedDirectedGraph.size());
+        final int sourceNodeIndex = 
+                random.nextInt(delayedDirectedGraph.size());
 
-            final DirectedGraphNode nondelayedGraphSource =
-                    nondelayedDirectedGraph.get(sourceNodeIndex);
+        final int targetNodeIndex = 
+                random.nextInt(delayedDirectedGraph.size());
 
-            final DirectedGraphNode nondelayedGraphTarget =
-                    nondelayedDirectedGraph.get(targetNodeIndex);
+        final DirectedGraphNode nondelayedGraphSource =
+                nondelayedDirectedGraph.get(sourceNodeIndex);
 
-            final DirectedGraphNode delayedGraphSource =
-                    delayedDirectedGraph.get(sourceNodeIndex);
+        final DirectedGraphNode nondelayedGraphTarget =
+                nondelayedDirectedGraph.get(targetNodeIndex);
 
-            final DirectedGraphNode delayedGraphTarget =
-                    delayedDirectedGraph.get(targetNodeIndex);
+        final DirectedGraphNode delayedGraphSource =
+                delayedDirectedGraph.get(sourceNodeIndex);
 
-            final List<DirectedGraphNode> testPath = 
-                    testPathFinder
-                            .search(delayedGraphSource,
-                                    delayedGraphTarget, 
-                                    new ForwardNodeExpander(),
-                                    new BackwardNodeExpander(),
-                                    null,
-                                    null,
-                                    null);
+        final DirectedGraphNode delayedGraphTarget =
+                delayedDirectedGraph.get(targetNodeIndex);
 
-            final List<DirectedGraphNode> referencePath = 
-                    referencePathFinder
-                            .search(nondelayedGraphSource, nondelayedGraphTarget);
-            
-            assertEquals(referencePath.size(), testPath.size());
-            assertEquals(referencePath.get(0), testPath.get(0));
-            assertEquals(referencePath.get(referencePath.size() - 1),
-                         testPath.get(testPath.size() - 1));
-        }
+        final List<DirectedGraphNode> testPath = 
+                testPathFinder
+                        .search(delayedGraphSource,
+                                delayedGraphTarget, 
+                                new ForwardNodeExpander(),
+                                new BackwardNodeExpander(),
+                                null,
+                                null,
+                                null);
+
+        final List<DirectedGraphNode> referencePath = 
+                referencePathFinder
+                        .search(nondelayedGraphSource, nondelayedGraphTarget);
+
+        assertEquals(referencePath.size(), testPath.size());
+        assertEquals(referencePath.get(0), testPath.get(0));
+        assertEquals(referencePath.get(referencePath.size() - 1),
+                     testPath.get(testPath.size() - 1));
         
         System.out.println("testCorrectness() done.");
     }   

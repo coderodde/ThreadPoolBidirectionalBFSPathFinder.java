@@ -16,12 +16,19 @@ public final class Benchmark {
     
     private static final int NODES = 100_000;
     private static final int MINIMUM_NODE_DEGREE = 3;
-    private static final int MAXIMUM_NODE_DEGREE = 10;
+    private static final int MAXIMUM_NODE_DEGREE = 7;
     private static final int MINIMUM_DELAY = 10;
     private static final int MAXIMUM_DELAY = 70;
+    private static final int NUMBER_OF_THREADS = 1024;
     
     public static void main(String[] args) {
-        Random random = new Random();
+        // 1710824771814L stucks.
+        long seed = System.currentTimeMillis();
+        seed = 1710824771814L;
+        Random random = new Random(seed);
+        
+        System.out.printf("Random seed = %d.\n", seed);
+        
         GraphPair graphPair = 
                 new DirectedGraphBuilder(
                         NODES, 
@@ -58,7 +65,7 @@ public final class Benchmark {
                         .withMasterThreadSleepDurationMillis(100)
                         .withNumberOfMasterTrials(50)
                         .withNumberOfRequestedThreads(1024)
-                        .withSlaveThreadSleepDurationMillis(200)
+                        .withSlaveThreadSleepDurationMillis(10)
                         .end();
         
         startTime = System.currentTimeMillis();
@@ -81,8 +88,6 @@ public final class Benchmark {
         boolean eq = Utils.pathsAreEquivalent(referencePath,
                                               threadPoolFinderPath);
         
-        System.out.printf("Paths are equivalent: %b.\n", eq);
-        
         String format1 =
                 "%" + Integer.toString(referencePath.size()).length()
                 + "d: %d\n";
@@ -92,6 +97,7 @@ public final class Benchmark {
                 + Integer.toString(threadPoolFinderPath.size()).length()
                 + "d: %d\n";
 
+        System.out.println();
         System.out.println("Reference finder path:");
         int lineNumber = 1;
 
@@ -111,5 +117,8 @@ public final class Benchmark {
                               lineNumber++, 
                               threadPoolFinderPath.get(i).getId());
         }
+        
+        System.out.println();
+        System.out.printf("Paths are equivalent: %b.\n", eq);
     }
 }

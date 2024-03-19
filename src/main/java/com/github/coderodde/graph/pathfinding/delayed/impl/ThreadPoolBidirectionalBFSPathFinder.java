@@ -683,6 +683,12 @@ extends AbstractDelayedGraphPathFinder<N> {
                 Collections.synchronizedSet(new HashSet<>());
         
         /**
+         * The semaphore protecting the {@code runningThreadSet} and
+         * {@code sleepingThreadSet}.
+         */
+        private final Semaphore mutex = new Semaphore(1, true);
+        
+        /**
          * The mutex for controlling access to the thread sets.
          */
         private final Semaphore threadSetsMutex = new Semaphore(1, true);
@@ -776,6 +782,14 @@ extends AbstractDelayedGraphPathFinder<N> {
             return parents.get(node);
         }
         
+        void lockThreadSetMutex() {
+            mutex.acquireUninterruptibly();
+        }
+        
+        void unlockThreadSetMutex() {
+            mutex.release();
+        }
+        
         /**
          * Tries to set the new node in the data structures.
          * 
@@ -815,10 +829,10 @@ extends AbstractDelayedGraphPathFinder<N> {
          * @param thread the thread to introduce.
          */
         void introduceThread(final AbstractSearchThread<N> thread) {
-            threadSetsMutex.acquireUninterruptibly();
+            lockThreadSetMutex();
             thread.putThreadToSleep(false);
             runningThreadSet.add(thread);
-            threadSetsMutex.release();
+            unlockThreadSetMutex();
         }
 
         /**
@@ -828,18 +842,18 @@ extends AbstractDelayedGraphPathFinder<N> {
          * @param thread the <b>slave</b> thread to hibernate.
          */
         void putThreadToSleep(final AbstractSearchThread<N> thread) {
-            threadSetsMutex.acquireUninterruptibly();
             thread.putThreadToSleep(true);
+            lockThreadSetMutex();
             runningThreadSet.remove(thread);
             sleepingThreadSet.add(thread);
-            threadSetsMutex.release();
+            unlockThreadSetMutex();
         }
         
         /**
          * Wakes up all the sleeping slave threads.
          */
         void wakeupAllSleepingThreads() { 
-            threadSetsMutex.acquireUninterruptibly();
+            lockThreadSetMutex();
             
             for (final AbstractSearchThread<N> thread : sleepingThreadSet) {
                 thread.putThreadToSleep(false);
@@ -847,7 +861,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             }
             
             sleepingThreadSet.clear();
-            threadSetsMutex.release();
+            unlockThreadSetMutex();
         }
 
         /**
@@ -855,7 +869,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          * threads may be joined.
          */
         void requestThreadsToExit() {
-            threadSetsMutex.acquireUninterruptibly();
+            lockThreadSetMutex();
             
             for (final StoppableThread thread : runningThreadSet) {
                 thread.requestThreadToExit();
@@ -865,7 +879,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 thread.requestThreadToExit();
             }
             
-            threadSetsMutex.release();
+            unlockThreadSetMutex();
         }
     }
 
