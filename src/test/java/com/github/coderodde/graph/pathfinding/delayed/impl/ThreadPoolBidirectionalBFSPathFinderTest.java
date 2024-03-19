@@ -123,17 +123,14 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     // This test may take a several seconds.
     @Test
     public void testCorrectness() {
+        
+        System.out.println("testCorrectness() begin:");
+        
         final int sourceNodeIndex = 
                 random.nextInt(delayedDirectedGraph.size());
 
         final int targetNodeIndex = 
                 random.nextInt(delayedDirectedGraph.size());
-
-        final DirectedGraphNode nondelayedGraphSource =
-                nondelayedDirectedGraph.get(sourceNodeIndex);
-
-        final DirectedGraphNode nondelayedGraphTarget =
-                nondelayedDirectedGraph.get(targetNodeIndex);
 
         final DirectedGraphNode delayedGraphSource =
                 delayedDirectedGraph.get(sourceNodeIndex);
@@ -141,6 +138,8 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         final DirectedGraphNode delayedGraphTarget =
                 delayedDirectedGraph.get(targetNodeIndex);
 
+        System.out.println("Running ThreadPoolBidirectionalBFSPathFinder:");
+        long start = System.currentTimeMillis();
         final List<DirectedGraphNode> testPath = 
                 testPathFinder
                         .search(delayedGraphSource,
@@ -150,10 +149,28 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                                 null,
                                 null,
                                 null);
+        
+        long end = System.currentTimeMillis();
+        
+        System.out.println(
+                "Running ThreadPoolBidirectionalBFSPathFinder done.");
+        
+        System.out.printf(
+                "ThreadPoolBidirectionalBFSPathFinder took %d milliseconds.\n", 
+                end - start);
 
+        System.out.println("ReferencePathFinder:");
+        
+        start = System.currentTimeMillis();
         final List<DirectedGraphNode> referencePath = 
                 referencePathFinder
-                        .search(nondelayedGraphSource, nondelayedGraphTarget);
+                        .search(delayedGraphSource, delayedGraphTarget);
+        
+        end = System.currentTimeMillis();
+        
+        System.out.println("Running ReferencePathFinder done.");
+        System.out.printf("ReferencePathFinder took %d milliseconds.\n",
+                          end - start);
 
         assertEquals(referencePath.size(), testPath.size());
         assertEquals(referencePath.get(0), testPath.get(0));
@@ -262,6 +279,58 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         assertEquals(d,  path.get(4));
         
         System.out.println("omitsFaultyLinks() done.");
+    }
+    
+    @Test
+    public void fluentApiSearchBuilding() {
+        DirectedGraphNode source = new DirectedGraphNode(1);
+        DirectedGraphNode target = new DirectedGraphNode(2);
+        
+        AbstractDelayedGraphPathFinder<DirectedGraphNode> pathfinder = 
+                ThreadPoolBidirectionalBFSPathFinderBuilder.
+                        <DirectedGraphNode>begin().end();
+        
+        AbstractNodeExpander<DirectedGraphNode> forwardNodeExpander = 
+                new ForwardNodeExpander();
+        
+        AbstractNodeExpander<DirectedGraphNode> backwardNodeExpander = 
+                new BackwardNodeExpander();
+        
+        ThreadPoolBidirectionalBFSPathFinderSearchBuilder.
+                <DirectedGraphNode>withPathFinder(pathfinder)
+                .withSourceNode(source)
+                .withTargetNode(target)
+                .withUndirectedGraphNodeExpander(forwardNodeExpander)
+                .search();
+        
+        ThreadPoolBidirectionalBFSPathFinderSearchBuilder.
+                <DirectedGraphNode>withPathFinder(pathfinder)
+                .withSourceNode(source)
+                .withTargetNode(target)
+                .withUndirectedGraphNodeExpander(forwardNodeExpander)
+                .withForwardSearchProgressLogger(null)
+                .withBackwardSearchProgressLogger(null)
+                .withSharedSearchProgressLogger(null)
+                .search();
+        
+        ThreadPoolBidirectionalBFSPathFinderSearchBuilder.
+                <DirectedGraphNode>withPathFinder(pathfinder)
+                .withSourceNode(source)
+                .withTargetNode(target)
+                .withForwardNodeExpander(forwardNodeExpander)
+                .withBackwardNodeExpander(backwardNodeExpander)
+                .search();
+        
+        ThreadPoolBidirectionalBFSPathFinderSearchBuilder.
+                <DirectedGraphNode>withPathFinder(pathfinder)
+                .withSourceNode(source)
+                .withTargetNode(target)
+                .withForwardNodeExpander(forwardNodeExpander)
+                .withBackwardNodeExpander(backwardNodeExpander)
+                .withForwardSearchProgressLogger(null)
+                .withBackwardSearchProgressLogger(null)
+                .withSharedSearchProgressLogger(null)
+                .search();
     }
 }
 
