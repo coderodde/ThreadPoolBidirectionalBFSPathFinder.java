@@ -212,6 +212,14 @@ extends AbstractDelayedGraphPathFinder<N> {
              DEFAULT_EXPANSION_JOIN_DURATION_MILLIS,
              DEFAULT_LOCK_WAIT_MILLIS);
     }
+    
+    public int getNumberOfExpandedNodes() {
+        return numberOfExpandedNodes;
+    }
+    
+    public long getDurationMillis() {
+        return duration;
+    }
 
     /**
      * {@inheritDoc }
@@ -398,14 +406,22 @@ extends AbstractDelayedGraphPathFinder<N> {
 
         // Count the number of expanded nodes over all threads:
         this.numberOfExpandedNodes = 0;
-
-        for (final ForwardSearchThread<N> thread : forwardSearchThreads) {
-            this.numberOfExpandedNodes += thread.getNumberOfExpandedNodes();
+        
+        forwardSearchState.lockThreadSetMutex();
+        
+        for (final AbstractSearchThread<N> thread 
+                : forwardSearchState.runningThreadSet) {
+            
+            this.numberOfExpandedNodes += thread.numberOfExpandedNodes;
         }
-
-        for (final BackwardSearchThread<N> thread : backwardSearchThreads) {
-            this.numberOfExpandedNodes += thread.getNumberOfExpandedNodes();
+        
+        for (final AbstractSearchThread<N> thread 
+                : backwardSearchState.runningThreadSet) {
+            
+            this.numberOfExpandedNodes += thread.numberOfExpandedNodes;
         }
+        
+        forwardSearchState.unlockThreadSetMutex();
 
         // Construct and return the path:
         return sharedSearchState.getPath();
@@ -1010,7 +1026,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         /**
          * Caches the amount of nodes expanded by this thread.
          */
-        protected int numberOfExpandedNodes;
+        private int numberOfExpandedNodes;
 
         /**
          * Construct this search thread.

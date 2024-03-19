@@ -45,16 +45,20 @@ public final class Benchmark {
         System.out.printf("Source node: %s\n", source);
         System.out.printf("Target node: %s\n", target);
         
+        ReferencePathFinder referencePathFinder = new ReferencePathFinder();
+        
         long startTime = System.currentTimeMillis();
         
         List<DirectedGraphNode> referencePath = 
-                new ReferencePathFinder()
+                referencePathFinder
                 .search(source, target);
         
         long endTime = System.currentTimeMillis();
         
-        System.out.printf("ReferencePathFinder in %d milliseconds.\n", 
-                          endTime - startTime);
+        System.out.printf("ReferencePathFinder in %d milliseconds, " + 
+                          "expanded %d nodes.\n", 
+                          endTime - startTime,
+                          referencePathFinder.getNumberOfExpandedNodes());
         
         ThreadPoolBidirectionalBFSPathFinder<DirectedGraphNode>
                 threadPoolPathFinder = 
@@ -64,7 +68,7 @@ public final class Benchmark {
                         .withLockWaitMillis(4)
                         .withMasterThreadSleepDurationMillis(100)
                         .withNumberOfMasterTrials(50)
-                        .withNumberOfRequestedThreads(1024)
+                        .withNumberOfRequestedThreads(NUMBER_OF_THREADS)
                         .withSlaveThreadSleepDurationMillis(10)
                         .end();
         
@@ -82,8 +86,10 @@ public final class Benchmark {
         endTime = System.currentTimeMillis();
         
         System.out.printf(
-                "ThreadPoolBidirectionalBFSPathFinder in %d milliseconds.\n", 
-                endTime - startTime);
+                "ThreadPoolBidirectionalBFSPathFinder in %d milliseconds, " + 
+                "expanded %d nodes.\n", 
+                endTime - startTime,
+                threadPoolPathFinder.getNumberOfExpandedNodes());
         
         boolean eq = Utils.pathsAreEquivalent(referencePath,
                                               threadPoolFinderPath);

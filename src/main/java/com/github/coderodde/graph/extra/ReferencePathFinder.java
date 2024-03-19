@@ -11,9 +11,13 @@ import java.util.Queue;
 
 public final class ReferencePathFinder  {
 
+    private int numberOfExpandedNodes;
+    
     public List<DirectedGraphNode> 
         search(final DirectedGraphNode source, 
                final DirectedGraphNode target) {
+            
+        numberOfExpandedNodes = 0;
             
         if (source.equals(target)) {
             return Arrays.asList(target);
@@ -33,6 +37,8 @@ public final class ReferencePathFinder  {
         
         final Map<DirectedGraphNode, Integer> distanceMapB =
                 new HashMap<>();
+        
+        int expandedNodes = 0;
         
         queueA.add(source);
         queueB.add(target);
@@ -58,6 +64,8 @@ public final class ReferencePathFinder  {
                 // Trivial load balancing.
                 final DirectedGraphNode current = queueA.poll();
                 
+                numberOfExpandedNodes++;
+                
                 if (distanceMapB.containsKey(current) 
                         && bestCost > distanceMapA.get(current) +
                                       distanceMapB.get(current)) {
@@ -77,6 +85,8 @@ public final class ReferencePathFinder  {
                 }
             } else {
                 final DirectedGraphNode current = queueB.poll();
+                
+                numberOfExpandedNodes++;
                 
                 if (distanceMapA.containsKey(current) 
                         && bestCost > distanceMapA.get(current) +
@@ -101,25 +111,30 @@ public final class ReferencePathFinder  {
         return Arrays.asList();
     }
         
+    public int getNumberOfExpandedNodes() {
+        return numberOfExpandedNodes;
+    }
+        
     private static <N> List<N> tracebackPath(N touchNode, 
                                              Map<N, N> forwardParentMap,
                                              Map<N, N> backwardParentMap) {
         final List<N> path = new ArrayList<>();
 
-            N current = touchNode;
+        N current = touchNode;
 
-            while (current != null) {
-                path.add(current);
-                current = forwardParentMap.get(current);
-            }
+        while (current != null) {
+            path.add(current);
+            current = forwardParentMap.get(current);
+        }
 
-            Collections.<String>reverse(path);
-            current = backwardParentMap.get(touchNode);
+        Collections.<String>reverse(path);
+        current = backwardParentMap.get(touchNode);
 
-            while (current != null) {
-                path.add(current);
-                current = backwardParentMap.get(current);
-            }
-            return path;
+        while (current != null) {
+            path.add(current);
+            current = backwardParentMap.get(current);
+        }
+        
+        return path;
     }
 }
