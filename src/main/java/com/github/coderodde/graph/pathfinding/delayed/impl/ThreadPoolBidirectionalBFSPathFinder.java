@@ -738,18 +738,19 @@ extends AbstractDelayedGraphPathFinder<N> {
         }
         
         int getUniqueRandomThreadId() {
+            lockThreadSetMutex();
+            
             while (true) {
                 int candidateThreadId = random.nextInt(Integer.MAX_VALUE);
                 
                 if (threadIdIsUnique(candidateThreadId)) {
+                    unlockThreadSetMutex();
                     return candidateThreadId;
                 }
             }
         }
         
         private boolean threadIdIsUnique(int threadId) {
-            threadSetsMutex.acquireUninterruptibly();
-            
             boolean isUnique = true;
             
             for (AbstractSearchThread<N> thread : runningThreadSet) {
@@ -765,8 +766,6 @@ extends AbstractDelayedGraphPathFinder<N> {
                     break;
                 }
             }
-            
-            threadSetsMutex.release();
             
             return isUnique;
         }
@@ -1245,10 +1244,10 @@ extends AbstractDelayedGraphPathFinder<N> {
                 // Stop this thread.
                 requestThreadToExit();
                 
-                searchState.threadSetsMutex.acquireUninterruptibly();
+                searchState.lockThreadSetMutex();
                 searchState.runningThreadSet.remove(this);
                 searchState.sleepingThreadSet.remove(this);
-                searchState.threadSetsMutex.release();
+                searchState.unlockThreadSetMutex();
                 
                 AbstractSearchThread<N> thread; 
                 
@@ -1287,9 +1286,9 @@ extends AbstractDelayedGraphPathFinder<N> {
                 thread.sleepRequested = false;
                 thread.start();
                 
-                searchState.threadSetsMutex.acquireUninterruptibly();
+                searchState.lockThreadSetMutex();
                 searchState.runningThreadSet.add(thread);
-                searchState.threadSetsMutex.release();
+                searchState.unlockThreadSetMutex();
                 
                 return;
             }

@@ -25,7 +25,7 @@ Above, any chained method whose name starts with `with` may be ommitted, in whic
 In order to build the pathfinding invocation, there are four options available:
 
 ```java
-List<DirectedGraphNode> path;'
+List<DirectedGraphNode> path;
 
 // Search in undirected graph without progress logging:
 path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder.
