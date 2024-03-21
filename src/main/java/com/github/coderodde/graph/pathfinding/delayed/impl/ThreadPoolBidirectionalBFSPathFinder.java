@@ -41,36 +41,36 @@ extends AbstractDelayedGraphPathFinder<N> {
     /**
      * The default number of threads performing the search.
      */
-    static final int DEFAULT_NUMBER_OF_THREADS = 8;
+    public static final int DEFAULT_NUMBER_OF_THREADS = 8;
     
     /**
      * The default number of milliseconds a master thread sleeps when it finds
      * the frontier queue empty.
      */
-    static final int DEFAULT_MASTER_THREAD_SLEEP_DURATION_MILLIS = 10;
+    public static final int DEFAULT_MASTER_THREAD_SLEEP_DURATION_MILLIS = 10;
 
     /**
      * The default number of milliseconds a slave thread sleeps when it finds
      * the frontier queue empty.
      */
-    static final int DEFAULT_SLAVE_THREAD_SLEEP_DURATION_MILLIS = 10;
+    public static final int DEFAULT_SLAVE_THREAD_SLEEP_DURATION_MILLIS = 10;
 
     /**
      * The default upper bound on the number of times a master thread hibernates
      * due to the frontier queue being empty before the entire search is 
      * terminated.
      */
-    static final int DEFAULT_NUMBER_OF_MASTER_TRIALS = 50;
+    public static final int DEFAULT_NUMBER_OF_MASTER_TRIALS = 50;
     
     /**
      * The default number of milliseconds to wait on thread joining.
      */
-    static final int DEFAULT_EXPANSION_JOIN_DURATION_MILLIS = 1_000;
+    public static final int DEFAULT_EXPANSION_JOIN_DURATION_MILLIS = 1_000;
     
     /**
      * The default number of milliseconds to wait for the lock. 
      */
-    static final int DEFAULT_LOCK_WAIT_MILLIS = 5;
+    public static final int DEFAULT_LOCK_WAIT_MILLIS = 5;
 
     /**
      * The minimum number of threads to allow. One thread per each of the two
