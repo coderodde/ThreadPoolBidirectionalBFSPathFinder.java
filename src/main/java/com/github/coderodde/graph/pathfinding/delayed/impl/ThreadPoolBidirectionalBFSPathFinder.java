@@ -462,6 +462,11 @@ extends AbstractDelayedGraphPathFinder<N> {
          * The target node. 
          */
         private final N target;
+        
+        /**
+         * The global flag indicating that the search must stop.
+         */
+        private volatile boolean stopRequested = false;
 
         /**
          * The state of all the forward search threads.
@@ -477,7 +482,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          * The mutex to use in order to synchronize all the concurrent 
          * operations.
          */
-        private final Semaphore mutex = new Semaphore(1, false);
+        private final Semaphore mutex = new Semaphore(1, true);
 
         /**
          * Caches the best known length from the source to the target nodes.
@@ -519,6 +524,14 @@ extends AbstractDelayedGraphPathFinder<N> {
             this.target = target;
             this.sharedProgressLogger = sharedProgressLogger;
             this.lockWaitDuration = lockWaitDuration;
+        }
+        
+        void requestGlobalStop() {
+            stopRequested = true;
+        }
+        
+        boolean globalStopRequested() {
+            return stopRequested;
         }
         
         void setForwardSearchState(final SearchState<N> forwardSearchState) {
@@ -564,7 +577,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          * @param current the touch node candidate.
          */
         void updateSearchState(final N current) {
-            if (forwardSearchState.containsNode(current) &&
+            if (forwardSearchState .containsNode(current) &&
                 backwardSearchState.containsNode(current)) {
                 
                 final int currentDistance = 
@@ -699,12 +712,6 @@ extends AbstractDelayedGraphPathFinder<N> {
                 Collections.synchronizedSet(new HashSet<>());
         
         /**
-         * The semaphore protecting the {@code runningThreadSet} and
-         * {@code sleepingThreadSet}.
-         */
-        private final Semaphore mutex = new Semaphore(1, true);
-        
-        /**
          * The mutex for controlling access to the thread sets.
          */
         private final Semaphore threadSetsMutex = new Semaphore(1, true);
@@ -798,11 +805,11 @@ extends AbstractDelayedGraphPathFinder<N> {
         }
         
         void lockThreadSetMutex() {
-            mutex.acquireUninterruptibly();
+            threadSetsMutex.acquireUninterruptibly();
         }
         
         void unlockThreadSetMutex() {
-            mutex.release();
+            threadSetsMutex.release();
         }
         
         /**
@@ -884,52 +891,24 @@ extends AbstractDelayedGraphPathFinder<N> {
          * threads may be joined.
          */
         void requestThreadsToExit() {
-            lockThreadSetMutex();
-            
-            for (final StoppableThread thread : runningThreadSet) {
-                thread.requestThreadToExit();
-            }
-            
-            for (final StoppableThread thread : sleepingThreadSet) {
-                thread.requestThreadToExit();
-            }
-            
-            unlockThreadSetMutex();
-        }
-    }
-
-    /**
-     * This abstract class defines a thread that may be asked to terminate.
-     */
-    private abstract static class StoppableThread extends Thread {
-
-        /**
-         * If set to {@code true}, this thread should exit.
-         */
-        private volatile boolean exit;
-
-        /**
-         * Returns the value of the exit flag.
-         * 
-         * @return the value of the exit flag.
-         */
-        boolean getExitFlag() {
-            return exit;
-        }
-        
-        /**
-         * Sends a request to finish the work.
-         */
-        void requestThreadToExit() {
-            exit = true;
+//            lockThreadSetMutex();
+//            
+//            for (final StoppableThread thread : runningThreadSet) {
+//                thread.requestThreadToExit();
+//            }
+//            
+//            for (final StoppableThread thread : sleepingThreadSet) {
+//                thread.requestThreadToExit();
+//            }
+//            
+//            unlockThreadSetMutex();
         }
     }
 
     /**
      * This abstract class defines a thread that may be asked to go to sleep.
      */
-    private abstract static class SleepingStoppableThread 
-            extends StoppableThread {
+    private abstract static class SleepingThread extends Thread {
 
         /**
          * Holds the flag indicating whether this thread is put to sleep.
@@ -961,9 +940,10 @@ extends AbstractDelayedGraphPathFinder<N> {
          * @param threadSleepTrials   the maximum number of trials to hibernate
          *                            a master thread before giving up.
          */
-        SleepingStoppableThread(final int threadSleepDuration,
-                                final int threadSleepTrials,
-                                final boolean isMasterThread) {
+        SleepingThread(final int threadSleepDuration,
+                       final int threadSleepTrials,
+                       final boolean isMasterThread) {
+            
             this.threadSleepDuration = threadSleepDuration;
             this.threadSleepTrials   = threadSleepTrials;
             this.isMasterThread = isMasterThread;
@@ -988,7 +968,7 @@ extends AbstractDelayedGraphPathFinder<N> {
      * @param <N> the actual node type.
      */
     private abstract static class AbstractSearchThread<N> 
-            extends SleepingStoppableThread {
+            extends SleepingThread {
 
         /**
          * The ID of this thread.
@@ -1077,7 +1057,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         @Override
         public void run() {
             while (true) {
-                if (getExitFlag()) {
+                if (sharedSearchState.globalStopRequested()) {
                     return;
                 }
                 
@@ -1146,9 +1126,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          */
         private void processCurrentInMasterThread() {
             lock();
-            
             final N head = searchState.getQueueHead();
-            
             unlock();
             
             searchState.wakeupAllSleepingThreads();
@@ -1170,13 +1148,22 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             if (currentHead == null) {
                 // We have run out of trials and the queue is still empty; halt.
-                sharedSearchState.requestExit();
+                sharedSearchState.requestGlobalStop();
             } else {
                 searchState.wakeupAllSleepingThreads();
             }
         }
         
         private void processCurrentInSlaveThread() {
+            if (sharedSearchState.globalStopRequested()) {
+                return;
+            }
+            
+            if (sleepRequested) {
+                mysleep(threadSleepDuration);
+                return;
+            }
+            
             lock();
             final N current = searchState.getQueueHead();
             unlock();
@@ -1191,12 +1178,14 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             lock();
             sharedSearchState.updateSearchState(current);
-            unlock();
             
             if (sharedSearchState.pathIsOptimal()) {
-                sharedSearchState.requestExit();
+                unlock();
+                sharedSearchState.requestGlobalStop();
                 return;
             }
+            
+            unlock();
             
             if (searchProgressLogger != null) {
                 searchProgressLogger.onExpansion(current);
@@ -1232,66 +1221,74 @@ extends AbstractDelayedGraphPathFinder<N> {
             ExpansionThread<N> expansionThread =
                     new ExpansionThread<>(current, nodeExpander);
             
+            expansionThread.setDaemon(true);
+            
             expansionThread.start();
             
-            mysleep(expansionJoinDuration);
-
-            if (expansionThread.isAlive()) {
-                lock();
-                searchState.oppositeSearchState.queue.remove(current);
-                unlock();
-                
-                // Stop this thread.
-                requestThreadToExit();
-                
-                searchState.lockThreadSetMutex();
-                searchState.runningThreadSet.remove(this);
-                searchState.sleepingThreadSet.remove(this);
-                searchState.unlockThreadSetMutex();
-                
-                AbstractSearchThread<N> thread; 
-                
-                // Spawn another, new thread to continue instead of this stuck
-                // thread:
-                if (searchState.isForwardDirectionState) {
-                    
-                    thread = 
-                        new ForwardSearchThread<>(
-                            searchState.getUniqueRandomThreadId(),
-                            nodeExpander,
-                            searchState,
-                            sharedSearchState,
-                            false,
-                            searchProgressLogger,
-                            threadSleepDuration,
-                            threadSleepTrials,
-                            expansionJoinDuration);
-                    
-                    
-                } else {
-                    
-                    thread = 
-                        new ForwardSearchThread<>(
-                            searchState.getUniqueRandomThreadId(),
-                            nodeExpander,
-                            searchState,
-                            sharedSearchState,
-                            false,
-                            searchProgressLogger,
-                            threadSleepDuration,
-                            threadSleepTrials,
-                            expansionJoinDuration);
-                }
-                
-                thread.sleepRequested = false;
-                thread.start();
-                
-                searchState.lockThreadSetMutex();
-                searchState.runningThreadSet.add(thread);
-                searchState.unlockThreadSetMutex();
-                
+            try {
+                expansionThread.join(expansionJoinDuration);
+            } catch (InterruptedException ex) {
                 return;
             }
+            
+//            mysleep(expansionJoinDuration);
+//
+//            if (expansionThread.isAlive()) {
+//                lock();
+//                searchState.oppositeSearchState.queue.remove(current);
+//                unlock();
+//                
+//                // Stop this thread.
+//                requestThreadToExit();
+//                
+//                searchState.lockThreadSetMutex();
+//                searchState.runningThreadSet.remove(this);
+//                searchState.sleepingThreadSet.remove(this);
+//                searchState.unlockThreadSetMutex();
+//                
+//                AbstractSearchThread<N> thread; 
+//                
+//                // Spawn another, new thread to continue instead of this stuck
+//                // thread:
+//                if (searchState.isForwardDirectionState) {
+//                    
+//                    thread = 
+//                        new ForwardSearchThread<>(
+//                            searchState.getUniqueRandomThreadId(),
+//                            nodeExpander,
+//                            searchState,
+//                            sharedSearchState,
+//                            false,
+//                            searchProgressLogger,
+//                            threadSleepDuration,
+//                            threadSleepTrials,
+//                            expansionJoinDuration);
+//                    
+//                    
+//                } else {
+//                    
+//                    thread = 
+//                        new ForwardSearchThread<>(
+//                            searchState.getUniqueRandomThreadId(),
+//                            nodeExpander,
+//                            searchState,
+//                            sharedSearchState,
+//                            false,
+//                            searchProgressLogger,
+//                            threadSleepDuration,
+//                            threadSleepTrials,
+//                            expansionJoinDuration);
+//                }
+//                
+//                thread.sleepRequested = false;
+//                thread.start();
+//                
+//                searchState.lockThreadSetMutex();
+//                searchState.runningThreadSet.add(thread);
+//                searchState.unlockThreadSetMutex();
+//                
+//                return;
+//            }
             
             // Once here, the expansion completed within expansionJoinDuration!
             

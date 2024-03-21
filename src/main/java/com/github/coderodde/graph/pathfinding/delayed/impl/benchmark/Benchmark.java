@@ -19,10 +19,10 @@ public final class Benchmark {
     private static final int MAXIMUM_NODE_DEGREE = 7;
     private static final int MINIMUM_DELAY = 10;
     private static final int MAXIMUM_DELAY = 70;
-    private static final int NUMBER_OF_THREADS = 1024;
+    private static final int NUMBER_OF_THREADS = 313;
     
     public static void main(String[] args) {
-        // 1710824771814L stucks.
+        // 1710824771814L takes long.
         long seed = System.currentTimeMillis();
         seed = 1710824771814L;
         Random random = new Random(seed);
