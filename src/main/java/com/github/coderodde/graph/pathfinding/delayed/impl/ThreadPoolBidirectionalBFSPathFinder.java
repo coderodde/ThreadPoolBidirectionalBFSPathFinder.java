@@ -1231,67 +1231,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 return;
             }
             
-//            mysleep(expansionJoinDuration);
-//
-//            if (expansionThread.isAlive()) {
-//                lock();
-//                searchState.oppositeSearchState.queue.remove(current);
-//                unlock();
-//                
-//                // Stop this thread.
-//                requestThreadToExit();
-//                
-//                searchState.lockThreadSetMutex();
-//                searchState.runningThreadSet.remove(this);
-//                searchState.sleepingThreadSet.remove(this);
-//                searchState.unlockThreadSetMutex();
-//                
-//                AbstractSearchThread<N> thread; 
-//                
-//                // Spawn another, new thread to continue instead of this stuck
-//                // thread:
-//                if (searchState.isForwardDirectionState) {
-//                    
-//                    thread = 
-//                        new ForwardSearchThread<>(
-//                            searchState.getUniqueRandomThreadId(),
-//                            nodeExpander,
-//                            searchState,
-//                            sharedSearchState,
-//                            false,
-//                            searchProgressLogger,
-//                            threadSleepDuration,
-//                            threadSleepTrials,
-//                            expansionJoinDuration);
-//                    
-//                    
-//                } else {
-//                    
-//                    thread = 
-//                        new ForwardSearchThread<>(
-//                            searchState.getUniqueRandomThreadId(),
-//                            nodeExpander,
-//                            searchState,
-//                            sharedSearchState,
-//                            false,
-//                            searchProgressLogger,
-//                            threadSleepDuration,
-//                            threadSleepTrials,
-//                            expansionJoinDuration);
-//                }
-//                
-//                thread.sleepRequested = false;
-//                thread.start();
-//                
-//                searchState.lockThreadSetMutex();
-//                searchState.runningThreadSet.add(thread);
-//                searchState.unlockThreadSetMutex();
-//                
-//                return;
-//            }
-            
             // Once here, the expansion completed within expansionJoinDuration!
-            
             lock();
             sharedSearchState.updateSearchState(current);
             unlock();
