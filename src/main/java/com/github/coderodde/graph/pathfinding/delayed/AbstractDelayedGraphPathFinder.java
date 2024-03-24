@@ -22,6 +22,11 @@ public abstract class AbstractDelayedGraphPathFinder<N> {
      * Stores the number of expanded nodes in the previous graph search.
      */
     protected int numberOfExpandedNodes;
+    
+    /**
+     * The halting flag. If on, halt the search.
+     */
+    protected volatile boolean haltRequested = false;
 
     /**
      * Searches for a shortest unweighted path from {@code source} to 
@@ -108,6 +113,10 @@ public abstract class AbstractDelayedGraphPathFinder<N> {
                       forwardSearchProgressLogger,
                       backwardSearchProgressLogger,
                       sharedSearchProgressLogger);
+    }
+        
+    public void halt() {
+        this.haltRequested = true;
     }
 
     /**

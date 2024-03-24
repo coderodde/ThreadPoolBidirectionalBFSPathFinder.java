@@ -16,6 +16,7 @@ public abstract class AbstractNodeExpander<N> {
      * node {@code node}.
      * 
      * @param node the node whose neighbors to generate.
+     * 
      * @return the list of neighbor nodes or {@code null} if the node 
      *         {@code node} is invalid.
      */
@@ -25,6 +26,7 @@ public abstract class AbstractNodeExpander<N> {
      * Checks that the input node {@code node} is a valid node in the graph.
      * 
      * @param node the node to check.
+     * 
      * @return {@code true} only if {@code node} is a valid node.
      */
     public abstract boolean isValidNode(final N node);

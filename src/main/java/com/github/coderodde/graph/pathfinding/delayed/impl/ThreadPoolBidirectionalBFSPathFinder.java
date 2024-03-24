@@ -560,6 +560,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                         + ".";
                 
                 LOGGER.log(Level.SEVERE, exceptionMessage);
+                
                 throw new RuntimeException();
             }
         }
