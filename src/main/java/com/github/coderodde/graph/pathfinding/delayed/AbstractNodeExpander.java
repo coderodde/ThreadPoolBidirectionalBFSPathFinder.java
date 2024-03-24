@@ -11,6 +11,12 @@ import java.util.List;
  */
 public abstract class AbstractNodeExpander<N> {
 
+    protected volatile boolean closed = false;
+    
+    public void close() {
+        closed = true;
+    }
+    
     /**
      * Expands the argument node, or namely, generates all the neighbors of the 
      * node {@code node}.
