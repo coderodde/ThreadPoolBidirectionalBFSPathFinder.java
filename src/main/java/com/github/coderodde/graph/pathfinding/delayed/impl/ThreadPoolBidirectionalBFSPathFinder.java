@@ -41,7 +41,7 @@ extends AbstractDelayedGraphPathFinder<N> {
     
     private static final Map<ThreadPoolBidirectionalBFSPathFinder,
                              SharedSearchState> INSTANCE_MAP = 
-            new ConcurrentHashMap<>();
+                            new ConcurrentHashMap<>();
     
     /**
      * The default number of threads performing the search.
@@ -326,7 +326,6 @@ extends AbstractDelayedGraphPathFinder<N> {
         forwardSearchThreads[0] = 
                 new ForwardSearchThread<>(0, 
                                           forwardSearchNodeExpander,
-                                          backwardSearchNodeExpander,
                                           forwardSearchState,
                                           sharedSearchState,
                                           true,
@@ -346,7 +345,6 @@ extends AbstractDelayedGraphPathFinder<N> {
             forwardSearchThreads[i] = 
                     new ForwardSearchThread<>(i,
                                               forwardSearchNodeExpander,
-                                              backwardSearchNodeExpander,
                                               forwardSearchState,
                                               sharedSearchState,
                                               false,
@@ -369,7 +367,6 @@ extends AbstractDelayedGraphPathFinder<N> {
         backwardSearchThreads[0] = 
                 new BackwardSearchThread<>(forwardSearchThreads.length,
                                            backwardSearchNodeExpander,
-                                           forwardSearchNodeExpander,
                                            backwardSearchState,
                                            sharedSearchState,
                                            true,
@@ -389,7 +386,6 @@ extends AbstractDelayedGraphPathFinder<N> {
             backwardSearchThreads[i] = 
                     new BackwardSearchThread<>(forwardSearchThreads.length + i,
                                                backwardSearchNodeExpander,
-                                               forwardSearchNodeExpander,
                                                backwardSearchState,
                                                sharedSearchState,
                                                false,
@@ -466,18 +462,12 @@ extends AbstractDelayedGraphPathFinder<N> {
         
         private final N node;
         private final AbstractNodeExpander<N> expander;
-        private final AbstractNodeExpander<N> oppositeExpander;
-        private final AbstractDelayedGraphPathFinder<N> finder;
         private volatile List<N> successorList = Collections.emptyList();
         
         ExpansionThread(final N node,
-                        final AbstractNodeExpander<N> expander,
-                        final AbstractNodeExpander<N> oppositeExpander,
-                        final AbstractDelayedGraphPathFinder<N> finder) {
+                        final AbstractNodeExpander<N> expander) {
             this.node = node;
             this.expander = expander;
-            this.oppositeExpander = oppositeExpander;
-            this.finder = finder;
         }
         
         @Override
@@ -491,11 +481,6 @@ extends AbstractDelayedGraphPathFinder<N> {
                         node);
                 
                 successorList = Collections.emptyList();
-                
-//                expander.close();
-//                oppositeExpander.close();
-//                
-//                finder.halt();
             }
         }
         
@@ -1037,8 +1022,6 @@ extends AbstractDelayedGraphPathFinder<N> {
          */
         protected final AbstractNodeExpander<N> nodeExpander;
         
-        protected final AbstractNodeExpander<N> oppositeNodeExpander;
-
         /**
          * The entire state of this search thread, shared possibly with other
          * threads working on the same search direction.
@@ -1094,7 +1077,6 @@ extends AbstractDelayedGraphPathFinder<N> {
          */
         AbstractSearchThread(final int id,
                              final AbstractNodeExpander<N> nodeExpander,
-                             final AbstractNodeExpander<N> oppositeNodeExpander,
                              final SearchState<N> searchState, 
                              final SharedSearchState<N> sharedSearchState,
                              final boolean isMasterThread,
@@ -1110,7 +1092,6 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             this.threadId              = id;
             this.nodeExpander          = nodeExpander;
-            this.oppositeNodeExpander  = oppositeNodeExpander;
             this.searchState           = searchState;
             this.sharedSearchState     = sharedSearchState;
             this.searchProgressLogger  = searchProgressLogger;
@@ -1274,10 +1255,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             }
             
             final ExpansionThread<N> expansionThread =
-                    new ExpansionThread<>(current,
-                                          nodeExpander,
-                                          oppositeNodeExpander, 
-                                          finder);
+                    new ExpansionThread<>(current, nodeExpander);
             
             expansionThread.setDaemon(true);
             
@@ -1352,7 +1330,6 @@ extends AbstractDelayedGraphPathFinder<N> {
         ForwardSearchThread(
                 final int id,
                 final AbstractNodeExpander<N> nodeExpander,
-                final AbstractNodeExpander<N> oppositeNodeExpander,
                 final SearchState<N> searchState, 
                 final SharedSearchState<N> sharedSearchState,
                 final boolean isMasterThread,
@@ -1364,7 +1341,6 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             super(id,
                   nodeExpander,
-                  oppositeNodeExpander,
                   searchState, 
                   sharedSearchState,
                   isMasterThread,
@@ -1405,7 +1381,6 @@ extends AbstractDelayedGraphPathFinder<N> {
          */
         BackwardSearchThread(final int id,
                              final AbstractNodeExpander<N> nodeExpander,
-                             final AbstractNodeExpander<N> oppositeNodeExpander,
                              final SearchState<N> searchState, 
                              final SharedSearchState<N> sharedSearchState,
                              final boolean isMasterThread,
@@ -1416,7 +1391,6 @@ extends AbstractDelayedGraphPathFinder<N> {
                              final AbstractDelayedGraphPathFinder<N> finder) {
            super(id,
                  nodeExpander,
-                 oppositeNodeExpander,
                  searchState,
                  sharedSearchState,
                  isMasterThread,
