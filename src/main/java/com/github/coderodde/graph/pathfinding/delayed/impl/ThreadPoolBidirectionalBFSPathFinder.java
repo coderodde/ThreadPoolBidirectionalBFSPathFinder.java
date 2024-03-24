@@ -245,27 +245,36 @@ extends AbstractDelayedGraphPathFinder<N> {
         Objects.requireNonNull(backwardSearchNodeExpander,
                                "The backward search node expander is null.");
 
-        // Check the validity of the source node:
-        if (!forwardSearchNodeExpander.isValidNode(source)) {
-            final String exceptionMessage = 
+        boolean isValidSourceNode;
+        
+        try {
+            isValidSourceNode = forwardSearchNodeExpander.isValidNode(source);
+        } catch (final Exception ex) {
+            isValidSourceNode = false;
+        }
+        
+        if (!isValidSourceNode) {
+            final String exceptionMessage =
                     "The source node (" + source + ") was rejected by the " +
                     "forward search node expander.";
-            
-            LOGGER.log(Level.SEVERE, exceptionMessage);
-            
+
             throw new IllegalArgumentException(exceptionMessage);
         }
 
-        // Check the validity of the target node:
-        if (!backwardSearchNodeExpander.isValidNode(target)) {
-            final String exceptionMessage = 
-                    "The target node (" + target + ") was rejected by the " +
+        boolean isValidTargetNode;
+        
+        try {
+            isValidTargetNode = backwardSearchNodeExpander.isValidNode(target);
+        } catch (final Exception ex) {
+            isValidTargetNode = false;
+        }
+        
+        if (!isValidTargetNode) {
+            final String exceptionMessage =
+                    "The target node (" + source + ") was rejected by the " +
                     "backward search node expander.";
-            
-            LOGGER.log(Level.SEVERE, exceptionMessage);
-            
-            throw new IllegalArgumentException(
-                    exceptionMessage);
+
+            throw new IllegalArgumentException(exceptionMessage);
         }
         
         // Possibly log the beginning of the search:
@@ -475,16 +484,18 @@ extends AbstractDelayedGraphPathFinder<N> {
         public void run() {
             try {
                 successorList = expander.generateSuccessors(node);
-            } catch (final RuntimeException ex) {
+            } catch (final Exception ex) {
                 System.out.printf(
                         "ERROR: %s could not expand article node \"%s\".\n", 
                         expander.getClass().getSimpleName(), 
                         node);
                 
-                expander.close();
-                oppositeExpander.close();
+                successorList = Collections.emptyList();
                 
-                finder.halt();
+//                expander.close();
+//                oppositeExpander.close();
+//                
+//                finder.halt();
             }
         }
         
@@ -1262,7 +1273,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 return;
             }
             
-            ExpansionThread<N> expansionThread =
+            final ExpansionThread<N> expansionThread =
                     new ExpansionThread<>(current,
                                           nodeExpander,
                                           oppositeNodeExpander, 
@@ -1274,8 +1285,12 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             try {
                 expansionThread.join(expansionJoinDuration);
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
+            } catch (Exception ex) {
+                return;
+            }
+            
+            if (expansionThread.successorList.isEmpty()) {
+                return;
             }
             
             // Once here, the expansion completed within expansionJoinDuration!
