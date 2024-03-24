@@ -138,7 +138,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         final DirectedGraphNode delayedGraphTarget =
                 delayedDirectedGraph.get(targetNodeIndex);
 
-        System.out.println("Running ThreadPoolBidirectionalBFSPathFinder:");
+        System.out.println("Running ThreadPoolBidirectionalBFSPathFinder...");
         long start = System.currentTimeMillis();
         final List<DirectedGraphNode> testPath = 
                 testPathFinder
@@ -159,7 +159,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                 "ThreadPoolBidirectionalBFSPathFinder took %d milliseconds.\n", 
                 end - start);
 
-        System.out.println("ReferencePathFinder:");
+        System.out.println("ReferencePathFinder...");
         
         start = System.currentTimeMillis();
         final List<DirectedGraphNode> referencePath = 
@@ -279,6 +279,48 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         assertEquals(d,  path.get(4));
         
         System.out.println("omitsFaultyLinks() done.");
+    }
+    
+    @Test
+    public void halt() {
+        final DirectedGraphNode source = new DirectedGraphNode(1, true, 10_000);
+        final DirectedGraphNode target = new DirectedGraphNode(2, true, 10_000);
+        
+        source.addChild(target);
+        
+        final AbstractNodeExpander<DirectedGraphNode> forwardNodeExpander = 
+                new ForwardNodeExpander();
+        
+        final AbstractNodeExpander<DirectedGraphNode> backwardNodeExpander = 
+                new BackwardNodeExpander();
+        
+        AbstractDelayedGraphPathFinder<DirectedGraphNode> finder =
+                ThreadPoolBidirectionalBFSPathFinderBuilder
+                .<DirectedGraphNode>begin()
+                .withJoinDurationMillis(1000)
+                .withNumberOfRequestedThreads(10)
+                .end();
+        
+        Runnable runnable = new Runnable() {
+            
+            @Override
+            public void run() {
+                ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+                        .<DirectedGraphNode>withPathFinder(finder)
+                        .withSourceNode(source)
+                        .withTargetNode(target)
+                        .withForwardNodeExpander(forwardNodeExpander)
+                        .withBackwardNodeExpander(backwardNodeExpander)
+                        .search();
+            }
+        };
+        
+        new Thread(runnable).start();
+        
+        System.out.println("Sleeping 3 seconds before halting...");
+        Utils.sleep(3000);
+        finder.halt();
+        System.out.println("Halted!");
     }
     
     @Test

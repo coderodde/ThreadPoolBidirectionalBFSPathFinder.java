@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -32,11 +33,15 @@ import java.util.logging.Logger;
  * 
  * @param <N> the actual graph node type.
  */
-public class ThreadPoolBidirectionalBFSPathFinder<N> 
+public final class ThreadPoolBidirectionalBFSPathFinder<N> 
 extends AbstractDelayedGraphPathFinder<N> {
     
     private static final boolean FORWARD_SEARCH_STATE = true;
     private static final boolean BACKWARD_SEARCH_STATE = false;
+    
+    private static final Map<ThreadPoolBidirectionalBFSPathFinder,
+                             SharedSearchState> INSTANCE_MAP = 
+            new ConcurrentHashMap<>();
     
     /**
      * The default number of threads performing the search.
@@ -262,7 +267,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             throw new IllegalArgumentException(
                     exceptionMessage);
         }
-
+        
         // Possibly log the beginning of the search:
         if (sharedSearchProgressLogger != null) {
             sharedSearchProgressLogger.onBeginSearch(source, target);
@@ -282,6 +287,8 @@ extends AbstractDelayedGraphPathFinder<N> {
                                         target, 
                                         sharedSearchProgressLogger,
                                         lockWaitDurationMillis);
+        
+        INSTANCE_MAP.put(this, sharedSearchState);
 
         // Create the state obj6/ect shared by all the threads working on forward
         // search direction:
@@ -423,8 +430,19 @@ extends AbstractDelayedGraphPathFinder<N> {
         
         forwardSearchState.unlockThreadSetMutex();
 
+        INSTANCE_MAP.remove(this);
+        
         // Construct and return the path:
         return sharedSearchState.getPath();
+    }
+
+    @Override
+    public void halt() {
+        final SharedSearchState<N> sharedSearchState = INSTANCE_MAP.get(this);
+        
+        if (sharedSearchState != null) {
+            sharedSearchState.requestGlobalStop();
+        }
     }
     
     private static final class ExpansionThread<N> extends Thread {
@@ -968,8 +986,7 @@ extends AbstractDelayedGraphPathFinder<N> {
      * 
      * @param <N> the actual node type.
      */
-    private abstract static class AbstractSearchThread<N> 
-            extends SleepingThread {
+    private static abstract class AbstractSearchThread<N> extends SleepingThread {
 
         /**
          * The ID of this thread.
@@ -1264,7 +1281,7 @@ extends AbstractDelayedGraphPathFinder<N> {
     /**
      * This class implements a search thread searching in forward direction.
      */
-    private static final class ForwardSearchThread<N> 
+    private final class ForwardSearchThread<N> 
             extends AbstractSearchThread<N> {
 
         /**
@@ -1314,7 +1331,7 @@ extends AbstractDelayedGraphPathFinder<N> {
     /**
      * This class implements a search thread searching in backward direction.
      */
-    private static final class BackwardSearchThread<N> 
+    private final class BackwardSearchThread<N> 
             extends AbstractSearchThread<N> {
 
         /**
