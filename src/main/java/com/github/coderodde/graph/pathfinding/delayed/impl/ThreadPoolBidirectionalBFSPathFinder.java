@@ -323,7 +323,8 @@ extends AbstractDelayedGraphPathFinder<N> {
                                           forwardSearchProgressLogger,
                                           masterThreadSleepDurationMillis,
                                           masterThreadTrials,
-                                          expansionJoinDurationMillis);
+                                          expansionJoinDurationMillis,
+                                          this);
 
         // Spawn the forward search master thread:
         forwardSearchState.introduceThread(forwardSearchThreads[0]);           
@@ -341,7 +342,8 @@ extends AbstractDelayedGraphPathFinder<N> {
                                               forwardSearchProgressLogger,
                                               slaveThreadSleepDurationMillis,
                                               masterThreadTrials,
-                                              expansionJoinDurationMillis);
+                                              expansionJoinDurationMillis,
+                                              this);
 
             forwardSearchState.introduceThread(forwardSearchThreads[i]);
             forwardSearchThreads[i].start();
@@ -362,7 +364,8 @@ extends AbstractDelayedGraphPathFinder<N> {
                                            backwardSearchProgressLogger,
                                            masterThreadSleepDurationMillis,
                                            masterThreadTrials,
-                                           expansionJoinDurationMillis);
+                                           expansionJoinDurationMillis,
+                                           this);
 
         // Spawn the backward search master thread:
         backwardSearchState.introduceThread(backwardSearchThreads[0]);
@@ -380,7 +383,8 @@ extends AbstractDelayedGraphPathFinder<N> {
                                                backwardSearchProgressLogger,
                                                slaveThreadSleepDurationMillis,
                                                masterThreadTrials,
-                                               expansionJoinDurationMillis);
+                                               expansionJoinDurationMillis,
+                                               this);
 
             backwardSearchState.introduceThread(backwardSearchThreads[i]);
             backwardSearchThreads[i].start();
@@ -449,16 +453,29 @@ extends AbstractDelayedGraphPathFinder<N> {
         
         private final N node;
         private final AbstractNodeExpander<N> expander;
+        private final AbstractDelayedGraphPathFinder<N> finder;
         private volatile List<N> successorList = Collections.emptyList();
         
-        ExpansionThread(final N node, final AbstractNodeExpander<N> expander) {
+        ExpansionThread(final N node,
+                        final AbstractNodeExpander<N> expander,
+                        final AbstractDelayedGraphPathFinder<N> finder) {
             this.node = node;
             this.expander = expander;
+            this.finder = finder;
         }
         
         @Override
         public void run() {
-            successorList = expander.generateSuccessors(node);
+            try {
+                successorList = expander.generateSuccessors(node);
+            } catch (final RuntimeException ex) {
+                System.out.printf(
+                        "ERROR: %s could not expand article node \"%s\".\n", 
+                        expander.getClass().getSimpleName(), 
+                        node);
+                
+                finder.halt();
+            }
         }
         
         List<N> getSuccessorList() {
@@ -1019,6 +1036,8 @@ extends AbstractDelayedGraphPathFinder<N> {
          * The number of milliseconds for waiting for the node expansion.
          */
         private final int expansionJoinDuration;
+        
+        private final AbstractDelayedGraphPathFinder<N> finder;
 
         /**
          * Caches the amount of nodes expanded by this thread.
@@ -1058,18 +1077,20 @@ extends AbstractDelayedGraphPathFinder<N> {
                              final ProgressLogger<N> searchProgressLogger,
                              final int threadSleepDuration,
                              final int threadSleepTrials,
-                             final int expansionJoinDuration) {
+                             final int expansionJoinDuration,
+                             final AbstractDelayedGraphPathFinder<N> finder) {
             
             super(threadSleepDuration, 
                   threadSleepTrials, 
                   isMasterThread);
             
-            this.threadId                    = id;
+            this.threadId              = id;
             this.nodeExpander          = nodeExpander;
             this.searchState           = searchState;
             this.sharedSearchState     = sharedSearchState;
             this.searchProgressLogger  = searchProgressLogger;
             this.expansionJoinDuration = expansionJoinDuration;
+            this.finder                = finder;
         }
 
         @Override
@@ -1126,15 +1147,6 @@ extends AbstractDelayedGraphPathFinder<N> {
         
         int getThreadId() {
             return threadId;
-        }
-
-        /**
-         * Returns the number of nodes expanded by this search thread.
-         * 
-         * @return the number of nodes.
-         */
-        int getNumberOfExpandedNodes() {
-            return numberOfExpandedNodes;
         }
         
         /**
@@ -1237,7 +1249,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             }
             
             ExpansionThread<N> expansionThread =
-                    new ExpansionThread<>(current, nodeExpander);
+                    new ExpansionThread<>(current, nodeExpander, finder);
             
             expansionThread.setDaemon(true);
             
@@ -1246,7 +1258,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             try {
                 expansionThread.join(expansionJoinDuration);
             } catch (InterruptedException ex) {
-                return;
+                throw new RuntimeException(ex);
             }
             
             // Once here, the expansion completed within expansionJoinDuration!
@@ -1314,7 +1326,8 @@ extends AbstractDelayedGraphPathFinder<N> {
                 final ProgressLogger<N> searchProgressLogger,
                 final int threadSleepDuration,
                 final int threadSleepTrials,
-                final int expansionJoinDuration) {
+                final int expansionJoinDuration,
+                final AbstractDelayedGraphPathFinder<N> finder) {
             
             super(id,
                   nodeExpander,
@@ -1324,7 +1337,8 @@ extends AbstractDelayedGraphPathFinder<N> {
                   searchProgressLogger,
                   threadSleepDuration,
                   threadSleepTrials,
-                  expansionJoinDuration);
+                  expansionJoinDuration,
+                  finder);
         }
     }
 
@@ -1363,7 +1377,8 @@ extends AbstractDelayedGraphPathFinder<N> {
                              final ProgressLogger<N> searchProgressLogger,
                              final int threadSleepDuration,
                              final int threadSleepTrials,
-                             final int expansionJoinDuration) {
+                             final int expansionJoinDuration,
+                             final AbstractDelayedGraphPathFinder<N> finder) {
            super(id,
                  nodeExpander,
                  searchState,
@@ -1372,7 +1387,8 @@ extends AbstractDelayedGraphPathFinder<N> {
                  searchProgressLogger,
                  threadSleepDuration,
                  threadSleepTrials,
-                 expansionJoinDuration);
+                 expansionJoinDuration,
+                 finder);
         }
     }
     

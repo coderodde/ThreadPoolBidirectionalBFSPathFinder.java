@@ -294,19 +294,26 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         final AbstractNodeExpander<DirectedGraphNode> backwardNodeExpander = 
                 new BackwardNodeExpander();
         
-        AbstractDelayedGraphPathFinder<DirectedGraphNode> finder =
+        AbstractDelayedGraphPathFinder<DirectedGraphNode> finder1 =
                 ThreadPoolBidirectionalBFSPathFinderBuilder
                 .<DirectedGraphNode>begin()
                 .withJoinDurationMillis(1000)
                 .withNumberOfRequestedThreads(10)
                 .end();
         
-        Runnable runnable = new Runnable() {
+        AbstractDelayedGraphPathFinder<DirectedGraphNode> finder2 =
+                ThreadPoolBidirectionalBFSPathFinderBuilder
+                .<DirectedGraphNode>begin()
+                .withJoinDurationMillis(1000)
+                .withNumberOfRequestedThreads(10)
+                .end();
+        
+        final Runnable runnable1 = new Runnable() {
             
             @Override
             public void run() {
                 ThreadPoolBidirectionalBFSPathFinderSearchBuilder
-                        .<DirectedGraphNode>withPathFinder(finder)
+                        .<DirectedGraphNode>withPathFinder(finder1)
                         .withSourceNode(source)
                         .withTargetNode(target)
                         .withForwardNodeExpander(forwardNodeExpander)
@@ -315,12 +322,36 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
             }
         };
         
-        new Thread(runnable).start();
+        final Runnable runnable2 = new Runnable() {
+            
+            @Override
+            public void run() {
+                ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+                        .<DirectedGraphNode>withPathFinder(finder2)
+                        .withSourceNode(source)
+                        .withTargetNode(target)
+                        .withForwardNodeExpander(forwardNodeExpander)
+                        .withBackwardNodeExpander(backwardNodeExpander)
+                        .search();
+            }
+        };
         
-        System.out.println("Sleeping 3 seconds before halting...");
+        new Thread(runnable1).start();
+        new Thread(runnable2).start();
+        
+        System.out.println(
+                "Sleeping 3 seconds before halting the first finder.");
+        
         Utils.sleep(3000);
-        finder.halt();
-        System.out.println("Halted!");
+        finder1.halt();
+        System.out.println("First finder halted!");
+        
+        System.out.println(
+                "Sleeping 2 seconds before halting the second finder.");
+        
+        Utils.sleep(2000);
+        finder2.halt();
+        System.out.println("Second finder halted!");
     }
     
     @Test
