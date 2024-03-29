@@ -1,4 +1,4 @@
-open module coderodde.ThreadPoolBidirectionalBFSPathFinder {
+module coderodde.ThreadPoolBidirectionalBFSPathFinder {
     requires java.logging;
     requires java.base;
     exports com.github.coderodde.graph.pathfinding.delayed;
