@@ -785,39 +785,6 @@ extends AbstractDelayedGraphPathFinder<N> {
         void setOppositeSearchState(SearchState<N> oppositeSearchState) {
             this.oppositeSearchState = oppositeSearchState;
         }
-        
-        int getUniqueRandomThreadId() {
-            lockThreadSetMutex();
-            
-            while (true) {
-                int candidateThreadId = random.nextInt(Integer.MAX_VALUE);
-                
-                if (threadIdIsUnique(candidateThreadId)) {
-                    unlockThreadSetMutex();
-                    return candidateThreadId;
-                }
-            }
-        }
-        
-        private boolean threadIdIsUnique(int threadId) {
-            boolean isUnique = true;
-            
-            for (AbstractSearchThread<N> thread : runningThreadSet) {
-                if (thread.getThreadId() == threadId) {
-                    isUnique = false;
-                    break;
-                }
-            }
-            
-            for (AbstractSearchThread<N> thread : sleepingThreadSet) {
-                if (thread.getThreadId() == threadId) {
-                    isUnique = false;
-                    break;
-                }
-            }
-            
-            return isUnique;
-        }
 
         N removeQueueHead() {
             if (queue.isEmpty()) {
@@ -1043,8 +1010,6 @@ extends AbstractDelayedGraphPathFinder<N> {
          */
         private final int expansionJoinDuration;
         
-        private final AbstractDelayedGraphPathFinder<N> finder;
-
         /**
          * Caches the amount of nodes expanded by this thread.
          */
@@ -1096,7 +1061,6 @@ extends AbstractDelayedGraphPathFinder<N> {
             this.sharedSearchState     = sharedSearchState;
             this.searchProgressLogger  = searchProgressLogger;
             this.expansionJoinDuration = expansionJoinDuration;
-            this.finder                = finder;
         }
 
         @Override
