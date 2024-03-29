@@ -202,6 +202,30 @@ extends AbstractDelayedGraphPathFinder<N> {
                          MINIMUM_LOCK_WAIT_MILLIS);
     }
 
+    public int getNumberOfThreads() {
+        return numberOfThreads;
+    }
+
+    public int getMasterThreadSleepDurationMillis() {
+        return masterThreadSleepDurationMillis;
+    }
+
+    public int getSlaveThreadSleepDurationMillis() {
+        return slaveThreadSleepDurationMillis;
+    }
+
+    public int getMasterThreadTrials() {
+        return masterThreadTrials;
+    }
+
+    public int getExpansionJoinDurationMillis() {
+        return expansionJoinDurationMillis;
+    }
+
+    public int getLockWaitDurationMillis() {
+        return lockWaitDurationMillis;
+    }
+
     /**
      * Construct this path finder using default sleeping duration.
      * 
