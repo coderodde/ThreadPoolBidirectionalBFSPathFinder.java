@@ -295,7 +295,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         
         if (!isValidTargetNode) {
             final String exceptionMessage =
-                    "The target node (" + source + ") was rejected by the " +
+                    "The target node (" + target + ") was rejected by the " +
                     "backward search node expander.";
 
             throw new IllegalArgumentException(exceptionMessage);
