@@ -144,6 +144,11 @@ extends AbstractDelayedGraphPathFinder<N> {
     private final int lockWaitDurationMillis;
     
     /**
+     * Indicates whether the previous search was halted.
+     */
+    private volatile boolean wasHalted = false;
+    
+    /**
      * The logging facility used to log abnormal activity.
      */
     private static final Logger LOGGER = 
@@ -262,6 +267,8 @@ extends AbstractDelayedGraphPathFinder<N> {
                final ProgressLogger<N> forwardSearchProgressLogger, 
                final ProgressLogger<N> backwardSearchProgressLogger, 
                final ProgressLogger<N> sharedSearchProgressLogger) {
+            
+        wasHalted = false;
             
         Objects.requireNonNull(forwardSearchNodeExpander, 
                                "The forward search node expander is null.");
@@ -480,6 +487,12 @@ extends AbstractDelayedGraphPathFinder<N> {
         if (sharedSearchState != null) {
             sharedSearchState.requestGlobalStop();
         }
+        
+        wasHalted = true;
+    }
+    
+    public boolean wasHalted() {
+        return wasHalted;
     }
     
     private static final class ExpansionThread<N> extends Thread {

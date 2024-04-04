@@ -49,7 +49,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                 .withMasterThreadSleepDurationMillis(MASTER_THREAD_SLEEP_DURATION)
                 .withSlaveThreadSleepDurationMillis(SLAVE_THREAD_SLEEP_DURATION)
                 .withNumberOfMasterTrials(MASTER_THREAD_TRIALS)
-                .withJoinDurationMillis(EXPANSION_JOIN_DURATION_MILLIS)
+                .withExpansionDurationMillis(EXPANSION_JOIN_DURATION_MILLIS)
                 .withLockWaitMillis(LOCK_WAIT_DURATION_MILLIS)
                 .end();
     
@@ -297,14 +297,14 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         AbstractDelayedGraphPathFinder<DirectedGraphNode> finder1 =
                 ThreadPoolBidirectionalBFSPathFinderBuilder
                 .<DirectedGraphNode>begin()
-                .withJoinDurationMillis(1000)
+                .withExpansionDurationMillis(1000)
                 .withNumberOfRequestedThreads(10)
                 .end();
         
         AbstractDelayedGraphPathFinder<DirectedGraphNode> finder2 =
                 ThreadPoolBidirectionalBFSPathFinderBuilder
                 .<DirectedGraphNode>begin()
-                .withJoinDurationMillis(1000)
+                .withExpansionDurationMillis(1000)
                 .withNumberOfRequestedThreads(10)
                 .end();
         

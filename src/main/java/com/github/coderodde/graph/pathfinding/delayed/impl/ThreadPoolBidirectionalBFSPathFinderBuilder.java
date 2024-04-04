@@ -78,7 +78,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderBuilder<N> {
             return this;
         }
         
-        public Builder<N> withJoinDurationMillis(
+        public Builder<N> withExpansionDurationMillis(
                 int expansionJoinDurationMillis) {
             settings.expansionJoinDurationMillis = 
                     Math.max(expansionJoinDurationMillis, 
