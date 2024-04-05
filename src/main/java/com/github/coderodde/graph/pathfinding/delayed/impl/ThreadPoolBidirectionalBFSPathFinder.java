@@ -144,6 +144,11 @@ extends AbstractDelayedGraphPathFinder<N> {
     private final int lockWaitDurationMillis;
     
     /**
+     * Indicates whether the previous search was halted.
+     */
+    private volatile boolean wasHalted = false;
+    
+    /**
      * The logging facility used to log abnormal activity.
      */
     private static final Logger LOGGER = 
@@ -485,6 +490,12 @@ extends AbstractDelayedGraphPathFinder<N> {
             sharedSearchState.requestGlobalStop();
             wasHalted = true;
         }
+        
+        wasHalted = true;
+    }
+    
+    public boolean wasHalted() {
+        return wasHalted;
     }
     
     @Override

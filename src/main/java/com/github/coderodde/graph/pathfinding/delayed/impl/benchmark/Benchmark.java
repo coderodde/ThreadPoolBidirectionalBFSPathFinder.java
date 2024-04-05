@@ -64,7 +64,7 @@ public final class Benchmark {
                 threadPoolPathFinder = 
                 ThreadPoolBidirectionalBFSPathFinderBuilder
                         .<DirectedGraphNode>begin()
-                        .withJoinDurationMillis(110)
+                        .withExpansionDurationMillis(110)
                         .withLockWaitMillis(4)
                         .withMasterThreadSleepDurationMillis(100)
                         .withNumberOfMasterTrials(50)
