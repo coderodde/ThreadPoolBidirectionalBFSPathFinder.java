@@ -129,4 +129,11 @@ public abstract class AbstractDelayedGraphPathFinder<N> {
     public int getNumberOfExpandedNodes() {
         return numberOfExpandedNodes;
     }
+    
+    /**
+     * Returns {@code true} iff the previous search was halted.
+     * 
+     * @return {@code true} iff the previous search was halted. 
+     */
+    public abstract boolean wasHalted();
 }
