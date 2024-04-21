@@ -157,8 +157,6 @@ extends AbstractDelayedGraphPathFinder<N> {
                     ThreadPoolBidirectionalBFSPathFinder
                             .class
                             .getSimpleName());
-    
-    private volatile boolean wasHalted = false;
 
     /**
      * Constructs this path finder.
@@ -490,10 +488,6 @@ extends AbstractDelayedGraphPathFinder<N> {
         }
         
         wasHalted = true;
-    }
-    
-    public boolean wasHalted() {
-        return wasHalted;
     }
     
     @Override
@@ -1220,7 +1214,9 @@ extends AbstractDelayedGraphPathFinder<N> {
             expansionThread.start();
             
             try {
-                expansionThread.join(expansionJoinDurationNanos);
+                expansionThread.join(
+                        expansionJoinDurationNanos / 1_000_000L, 
+                        (int)(expansionJoinDurationNanos % 1_000_000L));
             } catch (InterruptedException ex) {
                 return;
             }

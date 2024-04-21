@@ -91,7 +91,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         this.failingNodeGraph = directedGraphBuilder.getFailingGraph();
     }
     
-//    @Test
+    @Test
     public void testCorrectnessOnSmallGraph() {
         final DirectedGraphNode nodeA  = new DirectedGraphNode(1);
         final DirectedGraphNode nodeB1 = new DirectedGraphNode(2);
@@ -119,7 +119,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                         
     
     // This test may take a several seconds.
-//    @Test
+    @Test
     public void testCorrectness() {
         
         System.out.println("testCorrectness() begin:");
@@ -179,7 +179,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     }   
     
     // This test may take a several seconds too complete.
-//    @Test
+    @Test
     public void returnsEmptyPathOnDisconnectedGraph() {
         final int nodes = disconnectedDelayedDirectedGraph.size();
         final int sourceNodeIndex = random.nextInt(nodes / 2);
@@ -217,7 +217,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         System.out.println("returnsEmptyPathOnDisconnectedGraph() done.");
     }
     
-//    @Test
+    @Test
     public void haltsOnFailingNodes() {
         
         final DirectedGraphNode sourceNode = 
