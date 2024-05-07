@@ -26,14 +26,13 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     private static final int MINIMUM_DELAY = 3;
     private static final int MAXIMUM_DELAY = 40;
     private static final int REQUESTED_NUMBER_OF_THREADS = 8;
-    private static final int MASTER_THREAD_SLEEP_DURATION = 20;
-    private static final int SLAVE_THREAD_SLEEP_DURATION = 10;
+    private static final int MASTER_THREAD_SLEEP_DURATION_MILLIS = 20;
+    private static final int SLAVE_THREAD_SLEEP_DURATION_MILLIS = 10;
     private static final int MASTER_THREAD_TRIALS = 30;
     private static final int EXPANSION_JOIN_DURATION_MILLIS = 200;
     private static final int LOCK_WAIT_DURATION_MILLIS = 1;
     
     private final List<DirectedGraphNode> delayedDirectedGraph;
-    private final List<DirectedGraphNode> nondelayedDirectedGraph;
     
     private final List<DirectedGraphNode> disconnectedDelayedDirectedGraph;
     private final List<DirectedGraphNode> disconnectedNondelayedDirectedGraph;
@@ -46,8 +45,8 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                 ThreadPoolBidirectionalBFSPathFinderBuilder
                 .<DirectedGraphNode>begin()
                 .withNumberOfRequestedThreads(REQUESTED_NUMBER_OF_THREADS)
-                .withMasterThreadSleepDurationMillis(MASTER_THREAD_SLEEP_DURATION)
-                .withSlaveThreadSleepDurationMillis(SLAVE_THREAD_SLEEP_DURATION)
+                .withMasterThreadSleepDurationMillis(MASTER_THREAD_SLEEP_DURATION_MILLIS)
+                .withSlaveThreadSleepDurationMillis(SLAVE_THREAD_SLEEP_DURATION_MILLIS)
                 .withNumberOfMasterTrials(MASTER_THREAD_TRIALS)
                 .withExpansionDurationMillis(EXPANSION_JOIN_DURATION_MILLIS)
                 .withLockWaitMillis(LOCK_WAIT_DURATION_MILLIS)
@@ -82,7 +81,6 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                 disconnectedGraphBuilder.getDisconnectedGraphPair();
         
         this.delayedDirectedGraph = graphPair.delayedGraph;
-        this.nondelayedDirectedGraph = graphPair.nondelayedGraph;
         
         this.disconnectedDelayedDirectedGraph =
                 disconnectedGraphPair.delayedGraph;
