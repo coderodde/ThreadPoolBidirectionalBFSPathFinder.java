@@ -11,7 +11,7 @@ import java.util.Map;
  * @version 2.0.1 (May 8, 2024)
  * @since 2.0.1
  */
-final class TreeHeap<N> implements Iterable<N> {
+public final class TreeHeap<N> implements Iterable<N> {
 
     @Override
     public Iterator<N> iterator() {
@@ -55,11 +55,15 @@ final class TreeHeap<N> implements Iterable<N> {
         public N next() {
             final N returnElement = currentTreeHeapNode.node;
             currentTreeHeapNode = computeNextTreeHeapNode();
-            size++;
+            iterated++;
             return returnElement;
         }
         
         private TreeHeapNode<N> computeNextTreeHeapNode() {
+            if (iterated == size) {
+                return null;
+            }
+                
             if (currentTreeHeapNode.next != null) {
                 return currentTreeHeapNode.next;
             }
