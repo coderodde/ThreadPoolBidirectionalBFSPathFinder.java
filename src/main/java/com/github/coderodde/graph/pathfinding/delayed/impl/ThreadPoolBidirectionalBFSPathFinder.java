@@ -669,7 +669,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             }
         }
 
-        boolean pathIsOptimal() {
+        boolean pathIsOptimal() {            
             if (touchNode == null) {
                 return false;
             }
@@ -691,6 +691,37 @@ extends AbstractDelayedGraphPathFinder<N> {
                   backwardSearchState.getDistanceOf(backwardSearchHead);
             
             return distance > bestPathLengthSoFar;
+//            return getOptimalDistance() > bestPathLengthSoFar;
+        }
+        
+        int getOptimalDistance() {
+            int bestDistance = Integer.MAX_VALUE;
+//            long start = System.currentTimeMillis();
+            
+            for (final N node : forwardSearchState.queue) {
+                if (backwardSearchState.parents.containsKey(node)) {
+                    final int tentativeDistance = 
+                            forwardSearchState.getDistanceOf(node) + 
+                            backwardSearchState.getDistanceOf(node);
+                    
+                    bestDistance = Math.min(bestDistance, tentativeDistance);
+                }
+            }
+            
+            for (final N node : backwardSearchState.queue) {
+                if (forwardSearchState.parents.containsKey(node)) {
+                    final int tentativeDistance = 
+                            forwardSearchState.getDistanceOf(node) + 
+                            backwardSearchState.getDistanceOf(node);
+                    
+                    bestDistance = Math.min(bestDistance, tentativeDistance);
+                }
+            }
+            
+//            long end = System.currentTimeMillis();
+            
+//            System.out.printf("Duration: %d, distance: %d.\n", end - start, bestDistance);
+            return bestDistance;
         }
 
         /**
