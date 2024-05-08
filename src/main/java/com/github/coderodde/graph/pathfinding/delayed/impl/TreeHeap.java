@@ -54,8 +54,8 @@ public final class TreeHeap<N> implements Iterable<N> {
         @Override
         public N next() {
             final N returnElement = currentTreeHeapNode.node;
-            currentTreeHeapNode = computeNextTreeHeapNode();
             iterated++;
+            currentTreeHeapNode = computeNextTreeHeapNode();
             return returnElement;
         }
         
