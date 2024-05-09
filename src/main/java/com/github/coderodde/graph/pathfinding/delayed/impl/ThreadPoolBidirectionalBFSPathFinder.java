@@ -790,6 +790,11 @@ extends AbstractDelayedGraphPathFinder<N> {
         private final Map<N, Integer> distance = new HashMap<>();
         
         /**
+         * Holds the copy of {@code queue} in sorted order by distance.
+         */
+        private final TreeHeap<N> heap = new TreeHeap<>();
+        
+        /**
          * The set of all the threads working on this particular direction.
          */
         private final Set<AbstractSearchThread<N>> runningThreadSet = 
@@ -819,6 +824,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             queue.add(initialNode);
             parents.put(initialNode, null);
             distance.put(initialNode, 0);
+            heap.insert(initialNode, 0);
         }
 
         N removeQueueHead() {
@@ -826,13 +832,14 @@ extends AbstractDelayedGraphPathFinder<N> {
                 return null;
             }
             
-            N head = queue.remove();
-            
-            return head;
+            final N head = queue.remove();
+            heap.remove(head);
+            return head; 
         }
         
         N getQueueHead() {
-            return queue.peek();
+            return heap.minimumNode();
+//            return queue.peek(); // Commented out May 9, 2024.
         }
         
         boolean containsNode(final N node) {
@@ -873,9 +880,11 @@ extends AbstractDelayedGraphPathFinder<N> {
                 return false;
             }
             
-            distance.put(node, getDistanceOf(predecessor) + 1);
+            final int distance = getDistanceOf(predecessor) + 1;
+            distance.put(node, distance);
             parents.put(node, predecessor);
             queue.addLast(node);
+            heap.insert(node, distance);
             return true;
         }
         
@@ -883,9 +892,12 @@ extends AbstractDelayedGraphPathFinder<N> {
                 final N node, 
                 final N predecessor) {
             
-            if (distance.get(node) > distance.get(predecessor) + 1) {
-                distance.put(node, distance.get(predecessor) + 1);
+            final int updatedDistance = distance.get(predecessor) + 1;
+            
+            if (distance.get(node) > updatedDistance) {
+                distance.put(node, updatedDistance);
                 parents.put(node, predecessor);
+                heap.update(node, updatedDistance);
             }
         }
         

@@ -7,7 +7,7 @@ import static org.junit.Assert.*;
 public class TreeHeapTest {
     
     @Test
-    public void insertUpdateIterate() {
+    public void all() {
         TreeHeap<Integer> heap = new TreeHeap<>();
         
         heap.insert(1, 1);
@@ -26,5 +26,20 @@ public class TreeHeapTest {
         assertEquals(Integer.valueOf(1), iter.next());
         
         assertFalse(iter.hasNext());
+        
+        assertEquals(Integer.valueOf(4), heap.minimumNode());
+        assertEquals(0, heap.minimumPriority());
+        
+        assertEquals(Integer.valueOf(4), heap.extractMinimum());
+        assertEquals(3, heap.size());
+        
+        assertEquals(Integer.valueOf(2), heap.extractMinimum());
+        assertEquals(2, heap.size());
+        
+        assertEquals(Integer.valueOf(3), heap.extractMinimum());
+        assertEquals(1, heap.size());
+        
+        assertEquals(Integer.valueOf(1), heap.extractMinimum());
+        assertEquals(0, heap.size());
     }
 }

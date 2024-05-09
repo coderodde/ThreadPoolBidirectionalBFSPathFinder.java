@@ -12,11 +12,6 @@ import java.util.Map;
  * @since 2.0.1
  */
 public final class TreeHeap<N> implements Iterable<N> {
-
-    @Override
-    public Iterator<N> iterator() {
-        return new TreeHeapIterator();
-    }
     
     private static final class TreeHeapNode<N> {
         N node;
@@ -87,15 +82,20 @@ public final class TreeHeap<N> implements Iterable<N> {
     private final Map<N, TreeHeapNode<N>> nodeMap = new HashMap<>();
     private int size;
     
-    TreeHeap(final int accessTableCapacity) {
+    public TreeHeap(final int accessTableCapacity) {
         this.accessTable = new TreeHeapNode[accessTableCapacity];
     }
     
-    TreeHeap() {
+    public TreeHeap() {
         this(DEFAULT_ACCESS_TABLE_CAPACITY);
     }
     
-    void insert(final N node, final int priority) {
+    @Override
+    public Iterator<N> iterator() {
+        return new TreeHeapIterator();
+    }
+    
+    public void insert(final N node, final int priority) {
         final TreeHeapNode<N> newTreeHeapNode =
                 new TreeHeapNode<>(node, priority);
         
@@ -104,7 +104,7 @@ public final class TreeHeap<N> implements Iterable<N> {
         size++;
     }
     
-    void update(final N element, final int priority) {
+    public void update(final N element, final int priority) {
         final TreeHeapNode<N> node = nodeMap.get(element);
         
         unlinkImpl(node);
@@ -112,7 +112,22 @@ public final class TreeHeap<N> implements Iterable<N> {
         node.priority = priority;
     }
     
-    void remove(final N element) {
+    public int minimumPriority() {
+        return accessMinimumNode().priority;
+    }
+    
+    public N minimumNode() {
+        return accessMinimumNode().node;
+    }
+    
+    public N extractMinimum() {
+        final TreeHeapNode<N> treeNode = accessMinimumNode();
+        unlinkImpl(treeNode);
+        size--;
+        return treeNode.node;
+    }
+    
+    public void remove(final N element) {
         final TreeHeapNode<N> node = nodeMap.get(element);
         
         if (node == null) {
@@ -123,30 +138,50 @@ public final class TreeHeap<N> implements Iterable<N> {
         size--;
     }
     
+    public int size() {
+        return size;
+    }
+    
+    private TreeHeapNode<N> accessMinimumNode() {
+        for (int p = 0; p != accessTable.length; p++) {
+            if (accessTable[p] != null) {
+                return accessTable[p];
+            }
+        }
+        
+        throw new IllegalStateException("Should not get here.");
+    }
+    
     private void linkImpl(final TreeHeapNode<N> node, final int priority) {
         final TreeHeapNode<N> currentBucketHead = accessTable[priority];
         
         if (currentBucketHead != null) {
-            node.next = accessTable[priority];
-            accessTable[priority].prev = node;
+            node.next = currentBucketHead;
+            currentBucketHead.prev = node;
         } 
         
         accessTable[priority] = node;
     }
     
     private void unlinkImpl(final TreeHeapNode<N> node) {
-        if (node.prev == null && node.next == null) {
-            accessTable[node.priority] = null;
-        }
-        
         if (node.prev != null) {
             node.prev.next = node.next;
-            node.prev = null; // Help GC.
-        }
-        
-        if (node.next != null) {
-            node.next.prev = node.prev;
-            node.next = null; // Help GC.
+            node.prev = null;
+            
+            if (node.next != null) {
+                node.next.prev = node.prev;
+                node.next = null;
+            }
+        } else {
+            // Once here, node.prev == null!
+            if (node.next != null) {
+                node.next.prev = node.prev;
+                node.next = null;
+                accessTable[node.priority] = node.next;
+            } else {
+                // Remove the last node in the collision chain:
+                accessTable[node.priority] = null;
+            }
         }
     }
 }
