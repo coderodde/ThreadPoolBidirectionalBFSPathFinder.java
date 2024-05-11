@@ -261,10 +261,6 @@ extends AbstractDelayedGraphPathFinder<N> {
                final ProgressLogger<N> backwardSearchProgressLogger, 
                final ProgressLogger<N> sharedSearchProgressLogger) {
             
-        LOGGER.log(Level.INFO, 
-                   "[Search configuration:]\n{0}", 
-                   new ConfigurationInfo());
-            
         wasHalted = false;
             
         Objects.requireNonNull(forwardSearchNodeExpander, 
@@ -647,18 +643,42 @@ extends AbstractDelayedGraphPathFinder<N> {
          * @param current the touch node candidate.
          */
         void updateSearchState(final N current) {
-            if (forwardSearchState .heap.containsDatum(current) &&
-                backwardSearchState.heap.containsDatum(current)) {
+            final N forwardSearchHead  = forwardSearchState .heap.minimumNode();
+            final N backwardSearchHead = backwardSearchState.heap.minimumNode();
+            
+            final int forwardSearchBestCost;
+            
+            if (forwardSearchHead != null &&
+                    backwardSearchState
+                            .distance
+                            .containsKey(forwardSearchHead)) {
                 
-                final int currentDistance = 
-                        forwardSearchState .heap.getPriority(current) +
-                        backwardSearchState.heap.getPriority(current);
-
-                if (bestPathLengthSoFar > currentDistance) {
-                    bestPathLengthSoFar = currentDistance;
-                    touchNode = current;
-                }
+                forwardSearchBestCost = 
+                        forwardSearchState .distance.get(forwardSearchHead) + 
+                        backwardSearchState.distance.get(forwardSearchHead);
+            } else {
+                forwardSearchBestCost = Integer.MAX_VALUE;
             }
+            
+            final int backwardSearchBestCost;
+            
+            if (backwardSearchHead != null &&
+                    forwardSearchState
+                            .distance
+                            .containsKey(backwardSearchHead)) {
+                
+                backwardSearchBestCost = 
+                        forwardSearchState .distance.get(backwardSearchHead) + 
+                        backwardSearchState.distance.get(backwardSearchHead);
+            } else {
+                backwardSearchBestCost = Integer.MAX_VALUE;
+            }
+            
+            final int minimumBestCost = Math.min(forwardSearchBestCost,
+                                                 backwardSearchBestCost);
+            
+            bestPathLengthSoFar = Math.min(bestPathLengthSoFar, 
+                                           minimumBestCost);
         }
 
         boolean pathIsOptimal() {            
@@ -728,8 +748,13 @@ extends AbstractDelayedGraphPathFinder<N> {
     private static final class SearchState<N> {
         
         /**
-         * This map maps each discovered node to its predecessor on the shortest 
-         * path.
+         * This map maps each discovered node to its best distance estimate.
+         */
+        private final Map<N, Integer> distance = new HashMap<>();
+        
+        /**
+         * This map maps each discovered node to its predecessor on the current 
+         * shortest path.
          */
         private final Map<N, N> parents = new HashMap<>();
         
@@ -767,6 +792,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         SearchState(final N initialNode) {
             heap.insert(initialNode, 0);
             parents.put(initialNode, null);
+            distance.put(initialNode, 0);
         }
         
         void lockThreadSetMutex() {
@@ -789,26 +815,34 @@ extends AbstractDelayedGraphPathFinder<N> {
          *         otherwise.
          */
         private boolean trySetNodeInfo(final N node, final N predecessor) {
-            if (heap.containsDatum(node)) {
+            if (distance.containsKey(node)) {
                 // Nothing to set.
                 return false;
             }
             
-            final int distance = heap.getPriority(predecessor) + 1;
+            final int dist = distance.get(predecessor) + 1;
+            distance.put(node, dist);
             parents.put(node, predecessor);
-            heap.insert(node, distance);
+            heap.insert(node, dist);
             return true;
         }
         
+        /**
+         * Attempts to improve the current distance of {@code node}.
+         * 
+         * @param node        the node to improve.
+         * @param predecessor the predecessor of {@code node}.
+         */
         private void tryUpdateIfImprovementPossible(
                 final N node, 
                 final N predecessor) {
             
-            final int updatedDistance = heap.getPriority(predecessor) + 1;
+            final int updatedDistance = distance.get(predecessor) + 1;
             
-            if (heap.getPriority(node) > updatedDistance) {
-                heap.updatePriority(node, updatedDistance);
+            if (distance.get(node) > updatedDistance) {
+                distance.put(node, updatedDistance);
                 parents.put(node, predecessor);
+                heap.updatePriority(node, updatedDistance);
             }
         }
         

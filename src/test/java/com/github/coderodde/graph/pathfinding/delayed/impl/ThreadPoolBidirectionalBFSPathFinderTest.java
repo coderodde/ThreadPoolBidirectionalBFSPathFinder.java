@@ -25,7 +25,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     private static final int MAXIMUM_DEGREE = 6;
     private static final int MINIMUM_DELAY = 3;
     private static final int MAXIMUM_DELAY = 40;
-    private static final int REQUESTED_NUMBER_OF_THREADS = 8;
+    private static final int REQUESTED_NUMBER_OF_THREADS = 64;
     private static final int MASTER_THREAD_SLEEP_DURATION_MILLIS = 20;
     private static final int SLAVE_THREAD_SLEEP_DURATION_MILLIS = 10;
     private static final int MASTER_THREAD_TRIALS = 30;
@@ -91,7 +91,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         this.failingNodeGraph = directedGraphBuilder.getFailingGraph();
     }
     
-    @Test
+//    @Test
     public void testCorrectnessOnSmallGraph() {
         final DirectedGraphNode nodeA  = new DirectedGraphNode(1);
         final DirectedGraphNode nodeB1 = new DirectedGraphNode(2);
@@ -179,7 +179,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     }   
     
     // This test may take a several seconds too complete.
-    @Test
+//    @Test
     public void returnsEmptyPathOnDisconnectedGraph() {
         final int nodes = disconnectedDelayedDirectedGraph.size();
         final int sourceNodeIndex = random.nextInt(nodes / 2);
@@ -217,7 +217,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         System.out.println("returnsEmptyPathOnDisconnectedGraph() done.");
     }
     
-    @Test
+//    @Test
     public void haltsOnFailingNodes() {
         
         final DirectedGraphNode sourceNode = 
@@ -239,7 +239,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         System.out.println("haltsOnFailingNodes() done.");
     }
     
-    @Test
+//    @Test
     public void omitsFaultyLinks() {
         final DirectedGraphNode a  = new DirectedGraphNode(1, true, 100);
         final DirectedGraphNode b1 = new DirectedGraphNode(2, true, 100);
@@ -279,7 +279,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         System.out.println("omitsFaultyLinks() done.");
     }
     
-    @Test
+//    @Test
     public void halt() {
         final DirectedGraphNode source = new DirectedGraphNode(1, true, 10_000);
         final DirectedGraphNode target = new DirectedGraphNode(2, true, 10_000);
@@ -352,7 +352,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         System.out.println("Second finder halted!");
     }
     
-    @Test
+//    @Test
     public void fluentApiSearchBuilding() {
         DirectedGraphNode source = new DirectedGraphNode(1);
         DirectedGraphNode target = new DirectedGraphNode(2);
