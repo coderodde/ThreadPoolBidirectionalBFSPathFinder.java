@@ -3,8 +3,6 @@ package com.github.coderodde.graph.pathfinding.delayed.impl;
 import com.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
 import com.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import com.github.coderodde.graph.pathfinding.delayed.ProgressLogger;
-import com.github.coderodde.util.DialsHeap;
-import com.github.coderodde.util.IntegerMinimumPriorityQueue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -806,8 +804,8 @@ extends AbstractDelayedGraphPathFinder<N> {
         /**
          * Tries to set the new node in the data structures.
          * 
-         * @param node        the node to process.
-         * @param predecessor the predecessor node. In the forward search 
+         * @param current        the node to process.
+         * @param successor the predecessor node. In the forward search 
          *                    direction, it is the tail of the arc, and in
          *                    the backward search direction, it is the head of 
          *                    the arc.
@@ -1219,7 +1217,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             for (final N successor : expansionThread.getSuccessorList()) {
                 lock();
                 
-                if (searchState.trySetNodeInfo(successor, current)) {
+                if (searchState.trySetNodeInfo(current, successor)) {
                     if (searchProgressLogger != null) {
                         searchProgressLogger
                                 .onNeighborGeneration(successor);
