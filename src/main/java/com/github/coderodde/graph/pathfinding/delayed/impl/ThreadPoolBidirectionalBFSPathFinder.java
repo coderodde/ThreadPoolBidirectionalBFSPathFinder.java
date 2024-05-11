@@ -640,7 +640,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          * 
          * @param current the touch node candidate.
          */
-        void updateSearchState(final N current) {
+        void updateSearchState() {
             final N forwardSearchHead  = forwardSearchState .heap.minimumNode();
             final N backwardSearchHead = backwardSearchState.heap.minimumNode();
             
@@ -658,6 +658,11 @@ extends AbstractDelayedGraphPathFinder<N> {
                 forwardSearchBestCost = Integer.MAX_VALUE;
             }
             
+            if (bestPathLengthSoFar > forwardSearchBestCost) {
+                bestPathLengthSoFar = forwardSearchBestCost;
+                touchNode = forwardSearchHead;
+            }
+            
             final int backwardSearchBestCost;
             
             if (backwardSearchHead != null &&
@@ -672,11 +677,12 @@ extends AbstractDelayedGraphPathFinder<N> {
                 backwardSearchBestCost = Integer.MAX_VALUE;
             }
             
-            final int minimumBestCost = Math.min(forwardSearchBestCost,
-                                                 backwardSearchBestCost);
+            if (bestPathLengthSoFar > backwardSearchBestCost) {
+                bestPathLengthSoFar = backwardSearchBestCost;
+                touchNode = backwardSearchHead;
+            }
             
-            bestPathLengthSoFar = Math.min(bestPathLengthSoFar, 
-                                           minimumBestCost);
+            System.out.println("best so far: " + bestPathLengthSoFar);
         }
 
         boolean pathIsOptimal() {            
@@ -1149,7 +1155,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             searchState.wakeupAllSleepingThreads();
             
             lock();
-            sharedSearchState.updateSearchState(current);
+            sharedSearchState.updateSearchState();
             
             if (sharedSearchState.pathIsOptimal()) {
                 unlock();
@@ -1211,7 +1217,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             // Once here, the expansion completed within expansionJoinDuration!
             lock();
-            sharedSearchState.updateSearchState(current);
+            sharedSearchState.updateSearchState();
             unlock();
             
             for (final N successor : expansionThread.getSuccessorList()) {
