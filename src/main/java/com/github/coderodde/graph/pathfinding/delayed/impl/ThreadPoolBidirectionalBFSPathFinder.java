@@ -647,12 +647,12 @@ extends AbstractDelayedGraphPathFinder<N> {
          * @param current the touch node candidate.
          */
         void updateSearchState(final N current) {
-            if (forwardSearchState .containsNode(current) &&
-                backwardSearchState.containsNode(current)) {
+            if (forwardSearchState .heap.containsDatum(current) &&
+                backwardSearchState.heap.containsDatum(current)) {
                 
                 final int currentDistance = 
-                        forwardSearchState .getDistanceOf(current) +
-                        backwardSearchState.getDistanceOf(current);
+                        forwardSearchState .heap.getPriority(current) +
+                        backwardSearchState.heap.getPriority(current);
 
                 if (bestPathLengthSoFar > currentDistance) {
                     bestPathLengthSoFar = currentDistance;
@@ -703,7 +703,7 @@ extends AbstractDelayedGraphPathFinder<N> {
 
             while (current != null) {
                 path.add(current);
-                current = forwardSearchState.getParentOf(current);
+                current = forwardSearchState.parents.get(current);
             }
 
             Collections.<String>reverse(path);
@@ -711,7 +711,7 @@ extends AbstractDelayedGraphPathFinder<N> {
 
             while (current != null) {
                 path.add(current);
-                current = backwardSearchState.getParentOf(current);
+                current = backwardSearchState.parents.get(current);
             }
 
             if (sharedProgressLogger != null) {
@@ -769,18 +769,6 @@ extends AbstractDelayedGraphPathFinder<N> {
             parents.put(initialNode, null);
         }
         
-        boolean containsNode(final N node) {
-            return heap.containsDatum(node);
-        }
-        
-        int getDistanceOf(final N node) {
-            return heap.getPriority(node);
-        }
-        
-        N getParentOf(final N node) {
-            return parents.get(node);
-        }
-        
         void lockThreadSetMutex() {
             threadSetsMutex.acquireUninterruptibly();
         }
@@ -801,14 +789,14 @@ extends AbstractDelayedGraphPathFinder<N> {
          *         otherwise.
          */
         private boolean trySetNodeInfo(final N node, final N predecessor) {
-            if (containsNode(node)) {
+            if (heap.containsDatum(node)) {
                 // Nothing to set.
                 return false;
             }
             
-            final int d = heap.getPriority(predecessor) + 1;
+            final int distance = heap.getPriority(predecessor) + 1;
             parents.put(node, predecessor);
-            heap.insert(node, d);
+            heap.insert(node, distance);
             return true;
         }
         
@@ -819,8 +807,8 @@ extends AbstractDelayedGraphPathFinder<N> {
             final int updatedDistance = heap.getPriority(predecessor) + 1;
             
             if (heap.getPriority(node) > updatedDistance) {
-                parents.put(node, predecessor);
                 heap.updatePriority(node, updatedDistance);
+                parents.put(node, predecessor);
             }
         }
         
@@ -1149,9 +1137,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         }
         
         private void lock() {
-            while (!sharedSearchState.lock()) {
-                
-            }
+            while (!sharedSearchState.lock()) {}
         }
         
         private void unlock() {
