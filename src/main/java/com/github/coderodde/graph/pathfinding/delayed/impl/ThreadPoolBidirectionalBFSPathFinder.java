@@ -810,24 +810,19 @@ extends AbstractDelayedGraphPathFinder<N> {
         /**
          * Tries to set the new node in the data structures.
          * 
-         * @param current        the node to process.
-         * @param successor the predecessor node. In the forward search 
-         *                    direction, it is the tail of the arc, and in
-         *                    the backward search direction, it is the head of 
-         *                    the arc.
          * @return {@code true} if the {@code node} was not added, {@code false}
          *         otherwise.
          */
-        private boolean trySetNodeInfo(final N node, final N predecessor) {
-            if (distance.containsKey(node)) {
+        private boolean trySetNodeInfo(final N current, final N predecessor) {
+            if (distance.containsKey(current)) {
                 // Nothing to set.
                 return false;
             }
             
             final int dist = distance.get(predecessor) + 1;
-            distance.put(node, dist);
-            parents.put(node, predecessor);
-            heap.insert(node, dist);
+            distance.put(current, dist);
+            parents.put(current, predecessor);
+            heap.insert(current, dist);
             return true;
         }
         
@@ -1223,7 +1218,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             for (final N successor : expansionThread.getSuccessorList()) {
                 lock();
                 
-                if (searchState.trySetNodeInfo(current, successor)) {
+                if (searchState.trySetNodeInfo(successor, current)) {
                     if (searchProgressLogger != null) {
                         searchProgressLogger
                                 .onNeighborGeneration(successor);
