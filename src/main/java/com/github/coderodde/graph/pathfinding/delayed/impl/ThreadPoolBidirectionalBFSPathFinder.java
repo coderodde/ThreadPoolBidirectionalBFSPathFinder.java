@@ -3,6 +3,8 @@ package com.github.coderodde.graph.pathfinding.delayed.impl;
 import com.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
 import com.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import com.github.coderodde.graph.pathfinding.delayed.ProgressLogger;
+import com.github.coderodde.util.DialsHeap;
+import com.github.coderodde.util.IntegerMinimumPriorityQueue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -730,17 +732,11 @@ extends AbstractDelayedGraphPathFinder<N> {
          * path.
          */
         private final Map<N, N> parents = new HashMap<>();
-
-        /**
-         * This map maps each discovered node to its shortest path distance from
-         * the source node.
-         */
-        private final Map<N, Integer> distance = new HashMap<>();
         
         /**
          * Holds the copy of {@code queue} in sorted order by distance.
          */
-        private final TreeHeap<N> heap = new TreeHeap<>();
+        private final IntegerMinimumPriorityQueue<N> heap = new DialsHeap<>();
         
         /**
          * The set of all the threads working on this particular direction.
@@ -771,15 +767,14 @@ extends AbstractDelayedGraphPathFinder<N> {
         SearchState(final N initialNode) {
             heap.insert(initialNode, 0);
             parents.put(initialNode, null);
-            distance.put(initialNode, 0);
         }
         
         boolean containsNode(final N node) {
-            return distance.containsKey(node);
+            return heap.containsDatum(node);
         }
         
-        Integer getDistanceOf(final N node) {
-            return distance.get(node);
+        int getDistanceOf(final N node) {
+            return heap.getPriority(node);
         }
         
         N getParentOf(final N node) {
@@ -811,8 +806,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 return false;
             }
             
-            final int d = getDistanceOf(predecessor) + 1;
-            distance.put(node, d);
+            final int d = heap.getPriority(predecessor) + 1;
             parents.put(node, predecessor);
             heap.insert(node, d);
             return true;
@@ -822,12 +816,11 @@ extends AbstractDelayedGraphPathFinder<N> {
                 final N node, 
                 final N predecessor) {
             
-            final int updatedDistance = distance.get(predecessor) + 1;
+            final int updatedDistance = heap.getPriority(predecessor) + 1;
             
-            if (distance.get(node) > updatedDistance) {
-                distance.put(node, updatedDistance);
+            if (heap.getPriority(node) > updatedDistance) {
                 parents.put(node, predecessor);
-                heap.update(node, updatedDistance);
+                heap.updatePriority(node, updatedDistance);
             }
         }
         
