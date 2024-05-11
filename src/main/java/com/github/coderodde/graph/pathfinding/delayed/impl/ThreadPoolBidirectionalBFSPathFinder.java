@@ -681,8 +681,6 @@ extends AbstractDelayedGraphPathFinder<N> {
                 bestPathLengthSoFar = backwardSearchBestCost;
                 touchNode = backwardSearchHead;
             }
-            
-            System.out.println("best so far: " + bestPathLengthSoFar);
         }
 
         boolean pathIsOptimal() {            
