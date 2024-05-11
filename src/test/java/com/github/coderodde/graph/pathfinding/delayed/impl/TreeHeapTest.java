@@ -42,4 +42,21 @@ public class TreeHeapTest {
         assertEquals(Integer.valueOf(1), heap.extractMinimum());
         assertEquals(0, heap.size());
     }
+    
+    @Test
+    public void remove() {
+        TreeHeap<String> heap = new TreeHeap<>();
+        
+        heap.insert("a",  1);
+        heap.insert("b",  2);
+        heap.insert("c",  3);
+        heap.insert("c_", 3);
+        
+        assertEquals("a",  heap.extractMinimum());
+        assertEquals("b",  heap.extractMinimum());
+        assertEquals("c_", heap.extractMinimum());
+        assertEquals("c",  heap.extractMinimum());
+        
+        assertEquals(0, heap.size());
+    }
 }

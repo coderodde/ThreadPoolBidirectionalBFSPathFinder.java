@@ -117,10 +117,22 @@ public final class TreeHeap<N> implements Iterable<N> {
     }
     
     public N minimumNode() {
+        if (size == 0) {
+            return null;
+        }
+        
         return accessMinimumNode().node;
     }
     
+    public int getPriority(final N node) {
+        return nodeMap.get(node).priority;
+    }
+    
     public N extractMinimum() {
+        if (size == 0) {
+            return null;
+        }
+        
         final TreeHeapNode<N> treeNode = accessMinimumNode();
         unlinkImpl(treeNode);
         size--;

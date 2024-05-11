@@ -4,10 +4,8 @@ import com.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFi
 import com.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import com.github.coderodde.graph.pathfinding.delayed.ProgressLogger;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,7 +30,7 @@ import java.util.logging.Logger;
  * 
  * @param <N> the actual graph node type.
  * 
- * @version 2.0.0 (Apr 21, 2024)
+ * @version 2.0.1 (May 9, 2024)
  * @since 1.0.0
  */
 public final class ThreadPoolBidirectionalBFSPathFinder<N> 
@@ -177,10 +175,10 @@ extends AbstractDelayedGraphPathFinder<N> {
      *                              lock.
      */
     public ThreadPoolBidirectionalBFSPathFinder(
-            final int numberOfThreads,
+            final int  numberOfThreads,
             final long masterThreadSleepDurationNanos,
             final long slaveThreadSleepDurationNanos,
-            final int masterThreadTrials,
+            final int  masterThreadTrials,
             final long expansionThreadJoinDurationNanos,
             final long lockWaitDurationNanos) {
         
@@ -246,14 +244,6 @@ extends AbstractDelayedGraphPathFinder<N> {
 
     public long getLockWaitDurationNanos() {
         return lockWaitDurationNanos;
-    }
-    
-    public int getNumberOfExpandedNodes() {
-        return numberOfExpandedNodes;
-    }
-    
-    public long getDurationMillis() {
-        return duration;
     }
 
     /**
@@ -673,55 +663,19 @@ extends AbstractDelayedGraphPathFinder<N> {
             if (touchNode == null) {
                 return false;
             }
-
-            final N forwardSearchHead = forwardSearchState.getQueueHead();
-
-            if (forwardSearchHead == null) {
+            
+            if (forwardSearchState.heap.minimumNode() == null) {
+                return false;
+            }
+            
+            if (backwardSearchState.heap.minimumNode() == null) {
                 return false;
             }
 
-            final N backwardSearchHead = backwardSearchState.getQueueHead();
-
-            if (backwardSearchHead == null) {
-                return false;
-            }
-
-            final int distance =
-                  forwardSearchState .getDistanceOf(forwardSearchHead) +
-                  backwardSearchState.getDistanceOf(backwardSearchHead);
+            final int distance = forwardSearchState.heap.minimumPriority() + 
+                                backwardSearchState.heap.minimumPriority();
             
             return distance > bestPathLengthSoFar;
-//            return getOptimalDistance() > bestPathLengthSoFar;
-        }
-        
-        int getOptimalDistance() {
-            int bestDistance = Integer.MAX_VALUE;
-//            long start = System.currentTimeMillis();
-            
-            for (final N node : forwardSearchState.queue) {
-                if (backwardSearchState.parents.containsKey(node)) {
-                    final int tentativeDistance = 
-                            forwardSearchState.getDistanceOf(node) + 
-                            backwardSearchState.getDistanceOf(node);
-                    
-                    bestDistance = Math.min(bestDistance, tentativeDistance);
-                }
-            }
-            
-            for (final N node : backwardSearchState.queue) {
-                if (forwardSearchState.parents.containsKey(node)) {
-                    final int tentativeDistance = 
-                            forwardSearchState.getDistanceOf(node) + 
-                            backwardSearchState.getDistanceOf(node);
-                    
-                    bestDistance = Math.min(bestDistance, tentativeDistance);
-                }
-            }
-            
-//            long end = System.currentTimeMillis();
-            
-//            System.out.printf("Duration: %d, distance: %d.\n", end - start, bestDistance);
-            return bestDistance;
         }
 
         /**
@@ -772,12 +726,6 @@ extends AbstractDelayedGraphPathFinder<N> {
     private static final class SearchState<N> {
         
         /**
-         * This FIFO queue contains the queue of nodes reached but not yet 
-         * expanded. It is called the <b>search frontier</b>.
-         */
-        private final Deque<N> queue = new ArrayDeque<>();
-        
-        /**
          * This map maps each discovered node to its predecessor on the shortest 
          * path.
          */
@@ -821,25 +769,9 @@ extends AbstractDelayedGraphPathFinder<N> {
          *                    node should be the target node.
          */
         SearchState(final N initialNode) {
-            queue.add(initialNode);
+            heap.insert(initialNode, 0);
             parents.put(initialNode, null);
             distance.put(initialNode, 0);
-            heap.insert(initialNode, 0);
-        }
-
-        N removeQueueHead() {
-            if (queue.isEmpty()) {
-                return null;
-            }
-            
-            final N head = queue.remove();
-            heap.remove(head);
-            return head; 
-        }
-        
-        N getQueueHead() {
-            return heap.minimumNode();
-//            return queue.peek(); // Commented out May 9, 2024.
         }
         
         boolean containsNode(final N node) {
@@ -847,8 +779,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         }
         
         Integer getDistanceOf(final N node) {
-            Integer dist = distance.get(node);
-            return dist;
+            return distance.get(node);
         }
         
         N getParentOf(final N node) {
@@ -880,11 +811,10 @@ extends AbstractDelayedGraphPathFinder<N> {
                 return false;
             }
             
-            final int distance = getDistanceOf(predecessor) + 1;
-            distance.put(node, distance);
+            final int d = getDistanceOf(predecessor) + 1;
+            distance.put(node, d);
             parents.put(node, predecessor);
-            queue.addLast(node);
-            heap.insert(node, distance);
+            heap.insert(node, d);
             return true;
         }
         
@@ -1155,7 +1085,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          */
         private void processCurrentInMasterThread() {
             lock();
-            final N head = searchState.getQueueHead();
+            final N head = searchState.heap.minimumNode();
             unlock();
             
             searchState.wakeupAllSleepingThreads();
@@ -1168,7 +1098,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             for (int trials = 0; trials < threadSleepTrials; trials++) {
                 mysleep(threadSleepDurationNanos);
-                currentHead = searchState.getQueueHead();
+                currentHead = searchState.heap.minimumNode();
                 
                 if (currentHead != null) {
                     break;
@@ -1194,7 +1124,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             }
             
             lock();
-            final N current = searchState.getQueueHead();
+            final N current = searchState.heap.minimumNode();
             unlock();
                 
             if (current == null) {
@@ -1242,7 +1172,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          */
         private void expand() {
             lock();
-            final N current = searchState.removeQueueHead();
+            final N current = searchState.heap.extractMinimum();
             unlock();
             
             if (current == null) {

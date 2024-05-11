@@ -117,7 +117,7 @@ public abstract class AbstractDelayedGraphPathFinder<N> {
      * 
      * @return duration in milliseconds.
      */
-    public long getDuration() {
+    public final long getDuration() {
         return duration;
     }
 
@@ -126,7 +126,7 @@ public abstract class AbstractDelayedGraphPathFinder<N> {
      * 
      * @return the number of expanded nodes.
      */
-    public int getNumberOfExpandedNodes() {
+    public final int getNumberOfExpandedNodes() {
         return numberOfExpandedNodes;
     }
     
