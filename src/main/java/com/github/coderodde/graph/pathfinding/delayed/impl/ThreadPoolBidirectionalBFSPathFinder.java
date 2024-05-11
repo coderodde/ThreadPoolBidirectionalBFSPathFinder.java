@@ -3,8 +3,6 @@ package com.github.coderodde.graph.pathfinding.delayed.impl;
 import com.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
 import com.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import com.github.coderodde.graph.pathfinding.delayed.ProgressLogger;
-import com.github.coderodde.util.DialsHeap;
-import com.github.coderodde.util.IntegerMinimumPriorityQueue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -780,23 +778,22 @@ extends AbstractDelayedGraphPathFinder<N> {
         /**
          * Tries to set the new node in the data structures.
          * 
-         * @param node        the node to process.
-         * @param predecessor the predecessor node. In the forward search 
+         * @param current        the node to process.
+         * @param successor the predecessor node. In the forward search 
          *                    direction, it is the tail of the arc, and in
          *                    the backward search direction, it is the head of 
          *                    the arc.
          * @return {@code true} if the {@code node} was not added, {@code false}
          *         otherwise.
          */
-        private boolean trySetNodeInfo(final N node, final N predecessor) {
-            if (heap.containsDatum(node)) {
+        private boolean trySetNodeInfo(final N current, final N successor) {
+            if (heap.containsDatum(successor)) {
                 // Nothing to set.
                 return false;
             }
             
-            final int distance = heap.getPriority(predecessor) + 1;
-            parents.put(node, predecessor);
-            heap.insert(node, distance);
+            parents.put(current, successor);
+            heap.insert(current, heap.getPriority(current) + 1);
             return true;
         }
         
@@ -1185,7 +1182,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             for (final N successor : expansionThread.getSuccessorList()) {
                 lock();
                 
-                if (searchState.trySetNodeInfo(successor, current)) {
+                if (searchState.trySetNodeInfo(current, successor)) {
                     if (searchProgressLogger != null) {
                         searchProgressLogger
                                 .onNeighborGeneration(successor);
