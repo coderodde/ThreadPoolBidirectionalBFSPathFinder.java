@@ -94,7 +94,7 @@ public class DialsHeap<D> implements IntegerMinimumPriorityQueue<D> {
          */
         @Override
         public boolean hasNext() {
-            return iterated < size;
+            return iterated < nodeMap.size();
         }
 
         /**
@@ -118,7 +118,7 @@ public class DialsHeap<D> implements IntegerMinimumPriorityQueue<D> {
          * @return the next heap node in the iteration order.
          */
         private DialsHeapNode<D> computeNextDialsHeapNode() {
-            if (iterated == size) {
+            if (iterated == nodeMap.size()) {
                 // Once here, iteration is complete.
                 return null;
             }
@@ -159,11 +159,6 @@ public class DialsHeap<D> implements IntegerMinimumPriorityQueue<D> {
      * The map mapping the satellite datums to their respective heap nodes.
      */
     private final Map<D, DialsHeapNode<D>> nodeMap = new HashMap<>();
-    
-    /**
-     * Caches the number of satellite datums in this heap.
-     */
-    private int size = 0;
     
     /**
      * Constructs a heap with {@code tableCapacity} as the capacity of the 
@@ -213,7 +208,6 @@ public class DialsHeap<D> implements IntegerMinimumPriorityQueue<D> {
         
         nodeMap.put(datum, newTreeHeapNode);
         linkImpl(newTreeHeapNode, priority);
-        size++;
     }
     
     /**
@@ -246,7 +240,7 @@ public class DialsHeap<D> implements IntegerMinimumPriorityQueue<D> {
      */
     @Override
     public D minimumNode() {
-        if (size == 0) {
+        if (nodeMap.isEmpty()) {
             return null;
         }
         
@@ -274,7 +268,7 @@ public class DialsHeap<D> implements IntegerMinimumPriorityQueue<D> {
      */
     @Override
     public D extractMinimum() {
-        if (size == 0) {
+        if (nodeMap.isEmpty()) {
             return null;
         }
         
@@ -282,7 +276,6 @@ public class DialsHeap<D> implements IntegerMinimumPriorityQueue<D> {
         
         unlinkImpl(treeNode);
         nodeMap.remove(treeNode.datum);
-        size--;
         return treeNode.datum;
     }
     
@@ -292,7 +285,7 @@ public class DialsHeap<D> implements IntegerMinimumPriorityQueue<D> {
     @Override
     public void remove(final D datum) {
         unlinkImpl(nodeMap.get(datum));
-        size--;
+        nodeMap.remove(datum);
     }
     
     /**
@@ -300,7 +293,6 @@ public class DialsHeap<D> implements IntegerMinimumPriorityQueue<D> {
      */
     @Override
     public void clear() {
-        size = 0;
         nodeMap.clear();
         Arrays.fill(table, null);
     }
@@ -326,7 +318,7 @@ public class DialsHeap<D> implements IntegerMinimumPriorityQueue<D> {
      */
     @Override
     public int size() {
-        return size;
+        return nodeMap.size();
     }
     
     /**
@@ -334,7 +326,7 @@ public class DialsHeap<D> implements IntegerMinimumPriorityQueue<D> {
      */
     @Override
     public boolean isEmpty() {
-        return size == 0;
+        return nodeMap.isEmpty();
     }
     
     /**
