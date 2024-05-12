@@ -370,12 +370,13 @@ public class DialsHeap<D> implements IntegerMinimumPriorityQueue<D> {
     private void unlinkImpl(final DialsHeapNode<D> node) {
         if (node.prev != null) {
             node.prev.next = node.next;
-            node.prev = null;
             
             if (node.next != null) {
                 node.next.prev = node.prev;
                 node.next = null;
             }
+            
+            node.prev = null;
         } else {
             // Once here, node.prev == null!
             if (node.next != null) {
