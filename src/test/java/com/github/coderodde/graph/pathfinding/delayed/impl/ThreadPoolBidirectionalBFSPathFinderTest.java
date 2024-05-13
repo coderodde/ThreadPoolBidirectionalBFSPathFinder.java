@@ -17,7 +17,7 @@ import static org.junit.Assert.*;
 public final class ThreadPoolBidirectionalBFSPathFinderTest {
     
     private static final long SEED = 13L;
-    private static final int NODES = 50_000;
+    private static final int NODES = 100_000;
     private static final int DISCONNECTED_GRAPH_NODES = 1000;
     private static final int MINIMUM_DISCONNECTED_GRAPH_DEGREE = 2;
     private static final int MAXIMUM_DISCONNECTED_GRAPH_DEGREE = 5;

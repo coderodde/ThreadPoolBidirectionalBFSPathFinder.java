@@ -843,9 +843,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 parents.put(node, predecessor);
                 
                 if (heap.containsDatum(node)) {
-                    heap.updatePriority(node, updatedDistance);   
-                } else {
-                    heap.insert(node, updatedDistance);
+                    heap.updatePriority(node, updatedDistance);
                 }
             }
         }
@@ -1117,7 +1115,10 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             for (int trials = 0; trials < threadSleepTrials; trials++) {
                 mysleep(threadSleepDurationNanos);
+                
+                lock();
                 currentHead = searchState.heap.minimumNode();
+                unlock();
                 
                 if (currentHead != null) {
                     break;
