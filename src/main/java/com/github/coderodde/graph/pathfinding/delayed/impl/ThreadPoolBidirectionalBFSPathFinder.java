@@ -1110,7 +1110,10 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             for (int trials = 0; trials < threadSleepTrials; trials++) {
                 mysleep(threadSleepDurationNanos);
+                
+                lock();
                 currentHead = searchState.heap.minimumNode();
+                unlock();
                 
                 if (currentHead != null) {
                     break;
