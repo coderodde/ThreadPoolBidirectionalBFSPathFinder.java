@@ -841,7 +841,12 @@ extends AbstractDelayedGraphPathFinder<N> {
             if (distance.get(node) > updatedDistance) {
                 distance.put(node, updatedDistance);
                 parents.put(node, predecessor);
-                heap.updatePriority(node, updatedDistance);   
+                
+                if (heap.containsDatum(node)) {
+                    heap.updatePriority(node, updatedDistance);   
+                } else {
+                    heap.insert(node, updatedDistance);
+                }
             }
         }
         
