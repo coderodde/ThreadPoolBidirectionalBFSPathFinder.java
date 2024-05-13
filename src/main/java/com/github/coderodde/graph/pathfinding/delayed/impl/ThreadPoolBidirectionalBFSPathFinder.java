@@ -3,6 +3,8 @@ package com.github.coderodde.graph.pathfinding.delayed.impl;
 import com.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
 import com.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import com.github.coderodde.graph.pathfinding.delayed.ProgressLogger;
+import com.github.coderodde.util.DialsHeap;
+import com.github.coderodde.util.IntegerMinimumPriorityQueue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -839,7 +841,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             if (distance.get(node) > updatedDistance) {
                 distance.put(node, updatedDistance);
                 parents.put(node, predecessor);
-                heap.updatePriority(node, updatedDistance);
+                heap.updatePriority(node, updatedDistance);   
             }
         }
         
