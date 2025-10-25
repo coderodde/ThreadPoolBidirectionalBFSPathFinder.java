@@ -112,10 +112,16 @@ extends AbstractDelayedGraphPathFinder<N> {
     static final long MINIMUM_LOCK_WAIT_NANOS = 1_000L;
 
     /**
-     * Caches the requested number of threads to use in the search process. This
-     * field accounts for both forward and backward search direction.
+     * Caches the requested number of forward threads to use in the search 
+     * process.
      */
-    private final int numberOfThreads;
+    private final int numberOfForwardThreads;
+
+    /**
+     * Caches the requested number of backward threads to use in the search 
+     * process.
+     */
+    private final int numberOfBackwardThreads;
 
     /**
      * The duration of sleeping in milliseconds for the master threads.
@@ -161,7 +167,10 @@ extends AbstractDelayedGraphPathFinder<N> {
     /**
      * Constructs this path finder.
      * 
-     * @param numberOfThreads  the requested number of search threads.
+     * @param numberOfForwardThreads         the requested number of forward 
+     *                                       search threads.
+     * @param numberOfBackwardThreads        the requested number of backward 
+     *                                       search threads.
      * @param masterThreadSleepDurationNanos the number of nanoseconds a master 
      *                                       thread sleeps whenever it discovers 
      *                                       the frontier queue being empty.
@@ -177,15 +186,19 @@ extends AbstractDelayedGraphPathFinder<N> {
      *                              lock.
      */
     public ThreadPoolBidirectionalBFSPathFinder(
-            final int  numberOfThreads,
+            final int  numberOfForwardThreads,
+            final int  numberOfBackwardThreads,
             final long masterThreadSleepDurationNanos,
             final long slaveThreadSleepDurationNanos,
             final int  masterThreadTrials,
             final long expansionThreadJoinDurationNanos,
             final long lockWaitDurationNanos) {
         
-        this.numberOfThreads = Math.max(numberOfThreads, 
-                                        MINIMUM_NUMBER_OF_THREADS);
+        this.numberOfForwardThreads = Math.max(numberOfForwardThreads, 
+                                               MINIMUM_NUMBER_OF_THREADS);
+        
+        this.numberOfBackwardThreads = Math.max(numberOfBackwardThreads, 
+                                                MINIMUM_NUMBER_OF_THREADS);
 
         this.masterThreadSleepDurationNanos = 
                 Math.max(masterThreadSleepDurationNanos,
@@ -214,9 +227,11 @@ extends AbstractDelayedGraphPathFinder<N> {
      * @param requestedNumberOfThreads the requested number of search threads.
      */
     public ThreadPoolBidirectionalBFSPathFinder(
-            final int requestedNumberOfThreads) {
+            final int requestedNumberOfForwardThreads,
+            final int requestedNumberOfBackwardThreads) {
         
-        this(requestedNumberOfThreads, 
+        this(requestedNumberOfForwardThreads, 
+             requestedNumberOfBackwardThreads,
              DEFAULT_MASTER_THREAD_SLEEP_DURATION_NANOS,
              DEFAULT_SLAVE_THREAD_SLEEP_DURATION_NANOS,
              DEFAULT_NUMBER_OF_MASTER_TRIALS,
@@ -224,8 +239,12 @@ extends AbstractDelayedGraphPathFinder<N> {
              DEFAULT_LOCK_WAIT_NANOS);
     }
     
-    public int getNumberOfThreads() {
-        return numberOfThreads;
+    public int getNumberOfForwardThreads() {
+        return numberOfForwardThreads;
+    }
+    
+    public int getNumberOfBackwardThreads() {
+        return numberOfBackwardThreads;
     }
 
     public long getMasterThreadSleepDurationNanos() {
@@ -309,11 +328,6 @@ extends AbstractDelayedGraphPathFinder<N> {
         // This path finder collects some performance related statistics:
         this.duration = System.currentTimeMillis();
 
-        // Compute the numbers of threads for each of the search direction:
-        final int forwardSearchThreadCount  = numberOfThreads / 2;
-        final int backwardSearchThreadCount = numberOfThreads - 
-                                              forwardSearchThreadCount;
-
         // Create the state object shared by both the search direction:
         final SharedSearchState<N> sharedSearchState = 
                 new SharedSearchState<>(source, 
@@ -336,7 +350,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         
         // The array holding all forward search threads:
         final ForwardSearchThread<N>[] forwardSearchThreads =
-                new ForwardSearchThread[forwardSearchThreadCount];
+                new ForwardSearchThread[numberOfForwardThreads];
 
         // Below, the value of 'sleepDuration' is ignored since the thread being 
         // created is a master thread that never sleeps.
@@ -358,7 +372,7 @@ extends AbstractDelayedGraphPathFinder<N> {
 
         // Create and spawn all the slave threads working on forward search 
         // direction.
-        for (int i = 1; i < forwardSearchThreadCount; ++i) {
+        for (int i = 1; i < numberOfForwardThreads; ++i) {
             forwardSearchThreads[i] = 
                     new ForwardSearchThread<>(i,
                                               forwardSearchNodeExpander,
@@ -377,7 +391,7 @@ extends AbstractDelayedGraphPathFinder<N> {
 
         // The array holding all backward search threads:
         final BackwardSearchThread<N>[] backwardSearchThreads =
-                new BackwardSearchThread[backwardSearchThreadCount];
+                new BackwardSearchThread[numberOfBackwardThreads];
 
         // Below, the value of 'sleepDuration' is ignored since the thread being
         // created is a master thread that never sleeps.
@@ -399,7 +413,7 @@ extends AbstractDelayedGraphPathFinder<N> {
 
         // Create and spawn all the slave threads working on backward search
         // direction:
-        for (int i = 1; i < backwardSearchThreadCount; ++i) {
+        for (int i = 1; i < numberOfBackwardThreads; ++i) {
             backwardSearchThreads[i] = 
                     new BackwardSearchThread<>(forwardSearchThreads.length + i,
                                                backwardSearchNodeExpander,
@@ -1349,8 +1363,15 @@ extends AbstractDelayedGraphPathFinder<N> {
     
     private final class ConfigurationInfo {
         
-        private final int numberOfThreads =
-                ThreadPoolBidirectionalBFSPathFinder.this.numberOfThreads;
+        private final int numberOfForwardThreads =
+                ThreadPoolBidirectionalBFSPathFinder
+                .this
+                .numberOfForwardThreads;
+        
+        private final int numberOfBackwardThreads =
+                ThreadPoolBidirectionalBFSPathFinder
+                .this
+                .numberOfBackwardThreads;
         
         private final int masterThreadTrials = 
                 ThreadPoolBidirectionalBFSPathFinder.this.masterThreadTrials;
@@ -1377,7 +1398,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             
-            sb.append(String.format("numberOfThreads:            %,d.\n", numberOfThreads));
+            sb.append(String.format("numberOfThreads:            %,d.\n", numberOfForwardThreads));
             sb.append(String.format("masterThreadTrials:         %,d.\n", masterThreadTrials));
             sb.append(String.format("masterThreadSleepDuration:  %,d.\n", masterThreadSleepDuration));
             sb.append(String.format("slaveThreadSleepDuration:   %,d.\n", slaveThreadSleepDuration));

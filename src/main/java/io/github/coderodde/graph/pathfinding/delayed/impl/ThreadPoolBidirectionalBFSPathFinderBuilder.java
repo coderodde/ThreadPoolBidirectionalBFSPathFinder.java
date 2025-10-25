@@ -19,7 +19,9 @@ import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidir
 public final class ThreadPoolBidirectionalBFSPathFinderBuilder<N> {
     
     private static final class Settings {
-        int numberOfRequestedThreads = DEFAULT_NUMBER_OF_THREADS;
+        int numberOfForwardThreads = DEFAULT_NUMBER_OF_THREADS;
+        
+        int numberOfBackwardThreads = DEFAULT_NUMBER_OF_THREADS;
         
         long masterThreadSleepDurationNanos = 
                 DEFAULT_MASTER_THREAD_SLEEP_DURATION_NANOS;
@@ -55,16 +57,32 @@ public final class ThreadPoolBidirectionalBFSPathFinderBuilder<N> {
         private final Settings settings = new Settings();
         
         /**
-         * Selects the number of requested threads.
+         * Selects the number of forward threads.
          * 
-         * @param numberOfRequestedThreads the number of threads requested.
+         * @param numberOfForwardThreads the number of forward threads.
          * 
          * @return this builder. 
          */
-        public Builder<N> withNumberOfRequestedThreads(
-                int numberOfRequestedThreads) {
-            settings.numberOfRequestedThreads = 
-                    Math.max(numberOfRequestedThreads, 
+        public Builder<N> withNumberOfForwardThreads(
+                int numberOfForwardThreads) {
+            settings.numberOfForwardThreads = 
+                    Math.max(numberOfForwardThreads, 
+                             MINIMUM_NUMBER_OF_THREADS);
+                    
+            return this;
+        }
+        
+        /**
+         * Selects the number of backward threads.
+         * 
+         * @param numberOfBackwardThreads the number of forward threads.
+         * 
+         * @return this builder. 
+         */
+        public Builder<N> withNumberOfBackwardThreads(
+                int numberOfBackwardThreads) {
+            settings.numberOfBackwardThreads = 
+                    Math.max(numberOfBackwardThreads, 
                              MINIMUM_NUMBER_OF_THREADS);
                     
             return this;
@@ -220,7 +238,8 @@ public final class ThreadPoolBidirectionalBFSPathFinderBuilder<N> {
          */
         public ThreadPoolBidirectionalBFSPathFinder<N> end() {
             return new ThreadPoolBidirectionalBFSPathFinder<>(
-                    settings.numberOfRequestedThreads,
+                    settings.numberOfForwardThreads,
+                    settings.numberOfBackwardThreads,
                     settings.masterThreadSleepDurationNanos,
                     settings.slaveThreadSleepDurationNanos,
                     settings.numberOfMasterTrials,

@@ -1,7 +1,5 @@
 package io.github.coderodde.graph.pathfinding.delayed.impl;
 
-import io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinderSearchBuilder;
-import io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinderBuilder;
 import io.github.coderodde.graph.extra.BackwardNodeExpander;
 import io.github.coderodde.graph.extra.DirectedGraphBuilder;
 import io.github.coderodde.graph.extra.DirectedGraphNode;
@@ -27,7 +25,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     private static final int MAXIMUM_DEGREE = 6;
     private static final int MINIMUM_DELAY = 3;
     private static final int MAXIMUM_DELAY = 40;
-    private static final int REQUESTED_NUMBER_OF_THREADS = 64;
+    private static final int REQUESTED_NUMBER_OF_THREADS = 32;
     private static final int MASTER_THREAD_SLEEP_DURATION_MILLIS = 20;
     private static final int SLAVE_THREAD_SLEEP_DURATION_MILLIS = 10;
     private static final int MASTER_THREAD_TRIALS = 30;
@@ -46,7 +44,8 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
             testPathFinder = 
                 ThreadPoolBidirectionalBFSPathFinderBuilder
                 .<DirectedGraphNode>begin()
-                .withNumberOfRequestedThreads(REQUESTED_NUMBER_OF_THREADS)
+                .withNumberOfForwardThreads(REQUESTED_NUMBER_OF_THREADS)
+                .withNumberOfBackwardThreads(REQUESTED_NUMBER_OF_THREADS)
                 .withMasterThreadSleepDurationMillis(MASTER_THREAD_SLEEP_DURATION_MILLIS)
                 .withSlaveThreadSleepDurationMillis(SLAVE_THREAD_SLEEP_DURATION_MILLIS)
                 .withNumberOfMasterTrials(MASTER_THREAD_TRIALS)
@@ -298,14 +297,16 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                 ThreadPoolBidirectionalBFSPathFinderBuilder
                 .<DirectedGraphNode>begin()
                 .withExpansionDurationMillis(1000)
-                .withNumberOfRequestedThreads(10)
+                .withNumberOfForwardThreads(10)
+                .withNumberOfBackwardThreads(10)
                 .end();
         
         AbstractDelayedGraphPathFinder<DirectedGraphNode> finder2 =
                 ThreadPoolBidirectionalBFSPathFinderBuilder
                 .<DirectedGraphNode>begin()
                 .withExpansionDurationMillis(1000)
-                .withNumberOfRequestedThreads(10)
+                .withNumberOfForwardThreads(10)
+                .withNumberOfBackwardThreads(10)
                 .end();
         
         final Runnable runnable1 = new Runnable() {
