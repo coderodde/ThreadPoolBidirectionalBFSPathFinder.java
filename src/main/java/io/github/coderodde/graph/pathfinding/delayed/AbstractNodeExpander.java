@@ -1,4 +1,4 @@
-package com.github.coderodde.graph.pathfinding.delayed;
+package io.github.coderodde.graph.pathfinding.delayed;
 
 import java.util.List;
 

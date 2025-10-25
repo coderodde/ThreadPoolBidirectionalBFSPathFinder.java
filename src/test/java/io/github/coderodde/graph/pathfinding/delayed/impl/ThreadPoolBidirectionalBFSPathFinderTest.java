@@ -1,14 +1,16 @@
-package com.github.coderodde.graph.pathfinding.delayed.impl;
+package io.github.coderodde.graph.pathfinding.delayed.impl;
 
-import com.github.coderodde.graph.extra.BackwardNodeExpander;
-import com.github.coderodde.graph.extra.DirectedGraphBuilder;
-import com.github.coderodde.graph.extra.DirectedGraphNode;
-import com.github.coderodde.graph.extra.ForwardNodeExpander;
-import com.github.coderodde.graph.extra.GraphPair;
-import com.github.coderodde.graph.extra.ReferencePathFinder;
-import com.github.coderodde.graph.extra.Utils;
-import com.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
-import com.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
+import io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinderSearchBuilder;
+import io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinderBuilder;
+import io.github.coderodde.graph.extra.BackwardNodeExpander;
+import io.github.coderodde.graph.extra.DirectedGraphBuilder;
+import io.github.coderodde.graph.extra.DirectedGraphNode;
+import io.github.coderodde.graph.extra.ForwardNodeExpander;
+import io.github.coderodde.graph.extra.GraphPair;
+import io.github.coderodde.graph.extra.ReferencePathFinder;
+import io.github.coderodde.graph.extra.Utils;
+import io.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
+import io.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import java.util.List;
 import java.util.Random;
 import org.junit.Test;

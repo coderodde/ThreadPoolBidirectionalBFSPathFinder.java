@@ -1,6 +1,6 @@
-package com.github.coderodde.graph.extra;
+package io.github.coderodde.graph.extra;
 
-import com.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
+import io.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import java.util.List;
 
 public final class BackwardNodeExpander

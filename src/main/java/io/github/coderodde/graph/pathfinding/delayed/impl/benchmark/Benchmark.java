@@ -1,14 +1,14 @@
-package com.github.coderodde.graph.pathfinding.delayed.impl.benchmark;
+package io.github.coderodde.graph.pathfinding.delayed.impl.benchmark;
 
-import com.github.coderodde.graph.extra.BackwardNodeExpander;
-import com.github.coderodde.graph.extra.DirectedGraphBuilder;
-import com.github.coderodde.graph.extra.DirectedGraphNode;
-import com.github.coderodde.graph.extra.ForwardNodeExpander;
-import com.github.coderodde.graph.extra.GraphPair;
-import com.github.coderodde.graph.extra.ReferencePathFinder;
-import com.github.coderodde.graph.extra.Utils;
-import com.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder;
-import com.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinderBuilder;
+import io.github.coderodde.graph.extra.BackwardNodeExpander;
+import io.github.coderodde.graph.extra.DirectedGraphBuilder;
+import io.github.coderodde.graph.extra.DirectedGraphNode;
+import io.github.coderodde.graph.extra.ForwardNodeExpander;
+import io.github.coderodde.graph.extra.GraphPair;
+import io.github.coderodde.graph.extra.ReferencePathFinder;
+import io.github.coderodde.graph.extra.Utils;
+import io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder;
+import io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinderBuilder;
 import java.util.List;
 import java.util.Random;
 

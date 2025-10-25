@@ -1,16 +1,16 @@
-package com.github.coderodde.graph.pathfinding.delayed.impl;
+package io.github.coderodde.graph.pathfinding.delayed.impl;
 
-import static com.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_NUMBER_OF_MASTER_TRIALS;
-import static com.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_NUMBER_OF_THREADS;
-import static com.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_NUMBER_OF_THREADS;
-import static com.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_MASTER_THREAD_SLEEP_DURATION_NANOS;
-import static com.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_SLAVE_THREAD_SLEEP_DURATION_NANOS;
-import static com.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_EXPANSION_JOIN_DURATION_NANOS;
-import static com.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_LOCK_WAIT_NANOS;
-import static com.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_MASTER_THREAD_SLEEP_DURATION_NANOS;
-import static com.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_EXPANSION_JOIN_DURATION_NANOS;
-import static com.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_LOCK_WAIT_NANOS;
-import static com.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_NUMBER_OF_TRIALS;
+import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_NUMBER_OF_MASTER_TRIALS;
+import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_NUMBER_OF_THREADS;
+import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_NUMBER_OF_THREADS;
+import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_MASTER_THREAD_SLEEP_DURATION_NANOS;
+import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_SLAVE_THREAD_SLEEP_DURATION_NANOS;
+import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_EXPANSION_JOIN_DURATION_NANOS;
+import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_LOCK_WAIT_NANOS;
+import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_MASTER_THREAD_SLEEP_DURATION_NANOS;
+import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_EXPANSION_JOIN_DURATION_NANOS;
+import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_LOCK_WAIT_NANOS;
+import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_NUMBER_OF_TRIALS;
 
 /**
  * @version 2.0.0 (Apr 24, 2024)

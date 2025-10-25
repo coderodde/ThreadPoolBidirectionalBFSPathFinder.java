@@ -1,4 +1,4 @@
-package com.github.coderodde.graph.extra;
+package io.github.coderodde.graph.extra;
 
 import java.util.List;
 import java.util.Random;

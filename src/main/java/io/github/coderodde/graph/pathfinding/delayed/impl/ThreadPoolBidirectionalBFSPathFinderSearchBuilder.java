@@ -1,8 +1,8 @@
-package com.github.coderodde.graph.pathfinding.delayed.impl;
+package io.github.coderodde.graph.pathfinding.delayed.impl;
 
-import com.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
-import com.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
-import com.github.coderodde.graph.pathfinding.delayed.ProgressLogger;
+import io.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
+import io.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
+import io.github.coderodde.graph.pathfinding.delayed.ProgressLogger;
 import java.util.List;
 import java.util.Objects;
 
