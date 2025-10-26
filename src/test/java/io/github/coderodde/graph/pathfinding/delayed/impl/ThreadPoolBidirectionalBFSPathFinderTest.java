@@ -124,6 +124,8 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     public void testCorrectness() {
         
         System.out.println("testCorrectness() begin:");
+        System.out.println(
+                "(This test may fail depending on timing of the finder.)");
         
         final int sourceNodeIndex = 
                 random.nextInt(delayedDirectedGraph.size());

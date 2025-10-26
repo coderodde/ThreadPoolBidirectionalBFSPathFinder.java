@@ -3,11 +3,11 @@ package io.github.coderodde.graph.pathfinding.delayed.impl;
 import io.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
 import io.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import io.github.coderodde.graph.pathfinding.delayed.ProgressLogger;
-import com.github.coderodde.util.DialsHeap;
-import com.github.coderodde.util.IntegerMinimumPriorityQueue;
+import java.util.ArrayDeque;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -167,10 +167,8 @@ extends AbstractDelayedGraphPathFinder<N> {
     /**
      * Constructs this path finder.
      * 
-     * @param numberOfForwardThreads         the requested number of forward 
-     *                                       search threads.
-     * @param numberOfBackwardThreads        the requested number of backward 
-     *                                       search threads.
+     * @param numberOfForwardThreads  the number of forward search threads.
+     * @param numberOfBackwardThreads the number of backward search threads.
      * @param masterThreadSleepDurationNanos the number of nanoseconds a master 
      *                                       thread sleeps whenever it discovers 
      *                                       the frontier queue being empty.
@@ -197,7 +195,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         this.numberOfForwardThreads = Math.max(numberOfForwardThreads, 
                                                MINIMUM_NUMBER_OF_THREADS);
         
-        this.numberOfBackwardThreads = Math.max(numberOfBackwardThreads, 
+        this.numberOfBackwardThreads = Math.max(numberOfForwardThreads, 
                                                 MINIMUM_NUMBER_OF_THREADS);
 
         this.masterThreadSleepDurationNanos = 
@@ -224,14 +222,15 @@ extends AbstractDelayedGraphPathFinder<N> {
     /**
      * Construct this path finder using default sleeping duration.
      * 
-     * @param requestedNumberOfThreads the requested number of search threads.
+     * @param numberOfForwardThreads the number of forward search threads.
+     * @param numberOfBackwardThreads the number of backward search threads.
      */
     public ThreadPoolBidirectionalBFSPathFinder(
-            final int requestedNumberOfForwardThreads,
-            final int requestedNumberOfBackwardThreads) {
+            final int numberOfForwardThreads,
+            final int numberOfBackwardThreads) {
         
-        this(requestedNumberOfForwardThreads, 
-             requestedNumberOfBackwardThreads,
+        this(numberOfForwardThreads, 
+             numberOfBackwardThreads,
              DEFAULT_MASTER_THREAD_SLEEP_DURATION_NANOS,
              DEFAULT_SLAVE_THREAD_SLEEP_DURATION_NANOS,
              DEFAULT_NUMBER_OF_MASTER_TRIALS,
@@ -348,9 +347,10 @@ extends AbstractDelayedGraphPathFinder<N> {
         sharedSearchState.setForwardSearchState(forwardSearchState);
         sharedSearchState.setBackwardSearchState(backwardSearchState);
         
-        // The array holding all forward search threads:
+        // The array holding all forward slave threads and the forward master
+        // thread:
         final ForwardSearchThread<N>[] forwardSearchThreads =
-                new ForwardSearchThread[numberOfForwardThreads];
+                new ForwardSearchThread[numberOfForwardThreads + 1];
 
         // Below, the value of 'sleepDuration' is ignored since the thread being 
         // created is a master thread that never sleeps.
@@ -372,7 +372,7 @@ extends AbstractDelayedGraphPathFinder<N> {
 
         // Create and spawn all the slave threads working on forward search 
         // direction.
-        for (int i = 1; i < numberOfForwardThreads; ++i) {
+        for (int i = 1; i < forwardSearchThreads.length; ++i) {
             forwardSearchThreads[i] = 
                     new ForwardSearchThread<>(i,
                                               forwardSearchNodeExpander,
@@ -389,9 +389,10 @@ extends AbstractDelayedGraphPathFinder<N> {
             forwardSearchThreads[i].start();
         }
 
-        // The array holding all backward search threads:
+        // The array holding all backward slave threads and the backward master
+        // thread:
         final BackwardSearchThread<N>[] backwardSearchThreads =
-                new BackwardSearchThread[numberOfBackwardThreads];
+                new BackwardSearchThread[numberOfBackwardThreads + 1];
 
         // Below, the value of 'sleepDuration' is ignored since the thread being
         // created is a master thread that never sleeps.
@@ -413,7 +414,7 @@ extends AbstractDelayedGraphPathFinder<N> {
 
         // Create and spawn all the slave threads working on backward search
         // direction:
-        for (int i = 1; i < numberOfBackwardThreads; ++i) {
+        for (int i = 1; i < backwardSearchThreads.length; ++i) {
             backwardSearchThreads[i] = 
                     new BackwardSearchThread<>(forwardSearchThreads.length + i,
                                                backwardSearchNodeExpander,
@@ -656,46 +657,18 @@ extends AbstractDelayedGraphPathFinder<N> {
          * 
          * @param current the touch node candidate.
          */
-        void updateSearchState() {
-            final N forwardSearchHead  = forwardSearchState .heap.minimumNode();
-            final N backwardSearchHead = backwardSearchState.heap.minimumNode();
-            
-            final int forwardSearchBestCost;
-            
-            if (forwardSearchHead != null &&
-                    backwardSearchState
-                            .distance
-                            .containsKey(forwardSearchHead)) {
+        void updateSearchState(final N current) {
+            if (forwardSearchState .containsNode(current) &&
+                backwardSearchState.containsNode(current)) {
                 
-                forwardSearchBestCost = 
-                        forwardSearchState .distance.get(forwardSearchHead) + 
-                        backwardSearchState.distance.get(forwardSearchHead);
-            } else {
-                forwardSearchBestCost = Integer.MAX_VALUE;
-            }
-            
-            if (bestPathLengthSoFar > forwardSearchBestCost) {
-                bestPathLengthSoFar = forwardSearchBestCost;
-                touchNode = forwardSearchHead;
-            }
-            
-            final int backwardSearchBestCost;
-            
-            if (backwardSearchHead != null &&
-                    forwardSearchState
-                            .distance
-                            .containsKey(backwardSearchHead)) {
-                
-                backwardSearchBestCost = 
-                        forwardSearchState .distance.get(backwardSearchHead) + 
-                        backwardSearchState.distance.get(backwardSearchHead);
-            } else {
-                backwardSearchBestCost = Integer.MAX_VALUE;
-            }
-            
-            if (bestPathLengthSoFar > backwardSearchBestCost) {
-                bestPathLengthSoFar = backwardSearchBestCost;
-                touchNode = backwardSearchHead;
+                final int currentDistance = 
+                        forwardSearchState .getDistanceOf(current) +
+                        backwardSearchState.getDistanceOf(current);
+
+                if (bestPathLengthSoFar > currentDistance) {
+                    bestPathLengthSoFar = currentDistance;
+                    touchNode = current;
+                }
             }
         }
 
@@ -703,17 +676,22 @@ extends AbstractDelayedGraphPathFinder<N> {
             if (touchNode == null) {
                 return false;
             }
-            
-            if (forwardSearchState.heap.minimumNode() == null) {
-                return false;
-            }
-            
-            if (backwardSearchState.heap.minimumNode() == null) {
+
+            final N forwardSearchHead = forwardSearchState.getQueueHead();
+
+            if (forwardSearchHead == null) {
                 return false;
             }
 
-            final int distance = forwardSearchState.heap.minimumPriority() + 
-                                backwardSearchState.heap.minimumPriority();
+            final N backwardSearchHead = backwardSearchState.getQueueHead();
+
+            if (backwardSearchHead == null) {
+                return false;
+            }
+
+            final int distance =
+                  forwardSearchState .getDistanceOf(forwardSearchHead) +
+                  backwardSearchState.getDistanceOf(backwardSearchHead);
             
             return distance > bestPathLengthSoFar;
         }
@@ -777,11 +755,6 @@ extends AbstractDelayedGraphPathFinder<N> {
         private final Map<N, N> parents = new HashMap<>();
         
         /**
-         * Holds the copy of {@code queue} in sorted order by distance.
-         */
-        private final IntegerMinimumPriorityQueue<N> heap = new DialsHeap<>();
-        
-        /**
          * The set of all the threads working on this particular direction.
          */
         private final Set<AbstractSearchThread<N>> runningThreadSet = 
@@ -797,6 +770,11 @@ extends AbstractDelayedGraphPathFinder<N> {
          * The mutex for controlling access to the thread sets.
          */
         private final Semaphore threadSetsMutex = new Semaphore(1, true);
+        
+        /**
+         * The search frontier FIFO queue.
+         */
+        private final Deque<N> queue = new ArrayDeque<>();
 
         /**
          * Constructs the search state object.
@@ -808,7 +786,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          *                    node should be the target node.
          */
         SearchState(final N initialNode) {
-            heap.insert(initialNode, 0);
+            queue.addLast(initialNode);
             parents.put(initialNode, null);
             distance.put(initialNode, 0);
         }
@@ -821,6 +799,25 @@ extends AbstractDelayedGraphPathFinder<N> {
             threadSetsMutex.release();
         }
         
+        boolean containsNode(final N node) {
+            return distance.containsKey(node);
+        }
+        
+        int getDistanceOf(final N node) {
+            return distance.get(node);
+        }
+        
+        N getQueueHead() {
+            return queue.peekFirst();
+        }
+        
+        N removeQueueHead() {
+            if (queue.isEmpty()) {
+                return null;
+            }
+            
+            return queue.remove();
+        }
         /**
          * Tries to set the new node in the data structures.
          * 
@@ -833,10 +830,9 @@ extends AbstractDelayedGraphPathFinder<N> {
                 return false;
             }
             
-            final int dist = distance.get(predecessor) + 1;
-            distance.put(current, dist);
+            distance.put(current, getDistanceOf(predecessor) + 1);
             parents.put(current, predecessor);
-            heap.insert(current, dist);
+            queue.addLast(current);
             return true;
         }
         
@@ -850,15 +846,9 @@ extends AbstractDelayedGraphPathFinder<N> {
                 final N node, 
                 final N predecessor) {
             
-            final int updatedDistance = distance.get(predecessor) + 1;
-            
-            if (distance.get(node) > updatedDistance) {
-                distance.put(node, updatedDistance);
+            if (distance.get(node) > distance.get(predecessor) + 1) {
+                distance.put(node, distance.get(predecessor) + 1);
                 parents.put(node, predecessor);
-                
-                if (heap.containsDatum(node)) {
-                    heap.updatePriority(node, updatedDistance);
-                }
             }
         }
         
@@ -1116,7 +1106,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          */
         private void processCurrentInMasterThread() {
             lock();
-            final N head = searchState.heap.minimumNode();
+            final N head = searchState.getQueueHead();
             unlock();
             
             searchState.wakeupAllSleepingThreads();
@@ -1129,10 +1119,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             for (int trials = 0; trials < threadSleepTrials; trials++) {
                 mysleep(threadSleepDurationNanos);
-                
-                lock();
-                currentHead = searchState.heap.minimumNode();
-                unlock();
+                currentHead = searchState.getQueueHead();
                 
                 if (currentHead != null) {
                     break;
@@ -1158,7 +1145,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             }
             
             lock();
-            final N current = searchState.heap.minimumNode();
+            final N current = searchState.getQueueHead();
             unlock();
                 
             if (current == null) {
@@ -1170,7 +1157,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             searchState.wakeupAllSleepingThreads();
             
             lock();
-            sharedSearchState.updateSearchState();
+            sharedSearchState.updateSearchState(current);
             
             if (sharedSearchState.pathIsOptimal()) {
                 unlock();
@@ -1204,7 +1191,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          */
         private void expand() {
             lock();
-            final N current = searchState.heap.extractMinimum();
+            final N current = searchState.removeQueueHead();
             unlock();
             
             if (current == null) {
@@ -1232,7 +1219,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             // Once here, the expansion completed within expansionJoinDuration!
             lock();
-            sharedSearchState.updateSearchState();
+            sharedSearchState.updateSearchState(current);
             unlock();
             
             for (final N successor : expansionThread.getSuccessorList()) {
@@ -1363,15 +1350,8 @@ extends AbstractDelayedGraphPathFinder<N> {
     
     private final class ConfigurationInfo {
         
-        private final int numberOfForwardThreads =
-                ThreadPoolBidirectionalBFSPathFinder
-                .this
-                .numberOfForwardThreads;
-        
-        private final int numberOfBackwardThreads =
-                ThreadPoolBidirectionalBFSPathFinder
-                .this
-                .numberOfBackwardThreads;
+        private final int numberOfThreads =
+                ThreadPoolBidirectionalBFSPathFinder.this.numberOfForwardThreads;
         
         private final int masterThreadTrials = 
                 ThreadPoolBidirectionalBFSPathFinder.this.masterThreadTrials;
@@ -1398,7 +1378,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             
-            sb.append(String.format("numberOfThreads:            %,d.\n", numberOfForwardThreads));
+            sb.append(String.format("numberOfThreads:            %,d.\n", numberOfThreads));
             sb.append(String.format("masterThreadTrials:         %,d.\n", masterThreadTrials));
             sb.append(String.format("masterThreadSleepDuration:  %,d.\n", masterThreadSleepDuration));
             sb.append(String.format("slaveThreadSleepDuration:   %,d.\n", slaveThreadSleepDuration));
