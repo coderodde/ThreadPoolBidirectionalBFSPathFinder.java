@@ -24,7 +24,7 @@ public final class Benchmark {
     public static void main(String[] args) {
         // 1710824771814L takes long.
         long seed = System.currentTimeMillis();
-        seed = 1710824771814L;
+//        seed = 1710824771814L;
         Random random = new Random(seed);
         
         System.out.printf("Random seed = %d.\n", seed);
@@ -68,7 +68,8 @@ public final class Benchmark {
                         .withLockWaitMillis(4)
                         .withMasterThreadSleepDurationMillis(100)
                         .withNumberOfMasterTrials(50)
-                        .withNumberOfForwardThreads(NUMBER_OF_THREADS)
+                        .withNumberOfForwardThreads(NUMBER_OF_THREADS / 2)
+                        .withNumberOfBackwardThreads(NUMBER_OF_THREADS / 2)
                         .withSlaveThreadSleepDurationMillis(10)
                         .end();
         

@@ -1167,13 +1167,17 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             unlock();
             
-            if (searchProgressLogger != null) {
-                searchProgressLogger.onExpansion(current);
-            }
-            
             numberOfExpandedNodes++;
             
+            final long startTime = System.currentTimeMillis();
             expand();
+            final long endTime = System.currentTimeMillis();
+            final long expansionDuration = endTime - startTime;
+            
+            if (searchProgressLogger != null) {
+                searchProgressLogger.onExpansion(current,
+                                                 expansionDuration);
+            }
         }
         
         private void lock() {
