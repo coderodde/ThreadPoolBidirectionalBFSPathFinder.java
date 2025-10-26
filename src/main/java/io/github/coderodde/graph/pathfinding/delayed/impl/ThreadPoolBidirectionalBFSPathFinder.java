@@ -156,6 +156,16 @@ extends AbstractDelayedGraphPathFinder<N> {
     private volatile boolean wasHalted = false;
     
     /**
+     * The forward search progress logger.
+     */
+    private final ProgressLogger forwardProgressLogger;
+    
+    /**
+     * The backward search progress logger.
+     */
+    private final ProgressLogger backwardProgressLogger;
+    
+    /**
      * The logging facility used to log abnormal activity.
      */
     private static final Logger LOGGER = 
@@ -182,6 +192,8 @@ extends AbstractDelayedGraphPathFinder<N> {
      *                                         wait for the expansion thread.
      * @param lockWaitDurationNanos the number of milliseconds to wait for the 
      *                              lock.
+     * @param forwardProgressLogger  the forward search progress logger.
+     * @param backwardProgressLogger the backward search progress logger.
      */
     public ThreadPoolBidirectionalBFSPathFinder(
             final int  numberOfForwardThreads,
@@ -190,7 +202,9 @@ extends AbstractDelayedGraphPathFinder<N> {
             final long slaveThreadSleepDurationNanos,
             final int  masterThreadTrials,
             final long expansionThreadJoinDurationNanos,
-            final long lockWaitDurationNanos) {
+            final long lockWaitDurationNanos,
+            final ProgressLogger forwardProgressLogger,
+            final ProgressLogger backwardProgressLogger) {
         
         this.numberOfForwardThreads = Math.max(numberOfForwardThreads, 
                                                MINIMUM_NUMBER_OF_THREADS);
@@ -217,6 +231,29 @@ extends AbstractDelayedGraphPathFinder<N> {
         this.lockWaitDurationNanos = 
                 Math.max(lockWaitDurationNanos,
                          MINIMUM_LOCK_WAIT_NANOS);
+        
+        this.forwardProgressLogger  = forwardProgressLogger;
+        this.backwardProgressLogger = backwardProgressLogger;
+    }
+    
+    public ThreadPoolBidirectionalBFSPathFinder(
+            final int  numberOfForwardThreads,
+            final int  numberOfBackwardThreads,
+            final long masterThreadSleepDurationNanos,
+            final long slaveThreadSleepDurationNanos,
+            final int  masterThreadTrials,
+            final long expansionThreadJoinDurationNanos,
+            final long lockWaitDurationNanos) {
+        
+        this(numberOfForwardThreads,
+             numberOfBackwardThreads,
+             masterThreadSleepDurationNanos,
+             slaveThreadSleepDurationNanos,
+             masterThreadTrials,
+             expansionThreadJoinDurationNanos,
+             lockWaitDurationNanos,
+             null,
+             null);
     }
 
     /**
@@ -236,6 +273,14 @@ extends AbstractDelayedGraphPathFinder<N> {
              DEFAULT_NUMBER_OF_MASTER_TRIALS,
              DEFAULT_EXPANSION_JOIN_DURATION_NANOS,
              DEFAULT_LOCK_WAIT_NANOS);
+    }
+    
+    public ProgressLogger getForwardProgressLogger() {
+        return forwardProgressLogger;
+    }
+    
+    public ProgressLogger getBackwardProgressLogger() {
+        return backwardProgressLogger;
     }
     
     public int getNumberOfForwardThreads() {

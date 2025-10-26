@@ -63,7 +63,10 @@ public class ProgressLogger<N> {
      * @param source the source node.
      * @param target the target node.
      */
-    public void onBeginSearch(final N source, final N target) {}
+    public void onBeginSearch(final N source, final N target) {
+        expansionEntries.clear();
+        sumOfExpansionDurations = 0L;
+    }
 
     /**
      * This method should be called whenever the search expands the node 
