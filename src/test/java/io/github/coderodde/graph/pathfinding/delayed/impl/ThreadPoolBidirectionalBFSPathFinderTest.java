@@ -408,6 +408,46 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                 .withSharedSearchProgressLogger(null)
                 .search();
     }
+    
+    @Test
+    public void undirectedGraphTest() {
+        System.out.println("undirectedGraphTest()");
+        
+        DirectedGraphNode s = new DirectedGraphNode(1);
+        DirectedGraphNode t = new DirectedGraphNode(2);
+        DirectedGraphNode a = new DirectedGraphNode(3);
+        DirectedGraphNode b = new DirectedGraphNode(4);
+        
+        s.addChild(a);
+        a.addChild(s);
+        
+        a.addChild(b);
+        b.addChild(a);
+        
+        b.addChild(t);
+        t.addChild(b);
+        
+        AbstractDelayedGraphPathFinder<DirectedGraphNode> pathfinder = 
+                ThreadPoolBidirectionalBFSPathFinderBuilder.
+                        <DirectedGraphNode>begin()
+                        .withNumberOfForwardThreads(2)
+                        .withNumberOfBackwardThreads(2)
+                        .end();
+        
+        List<DirectedGraphNode> path = 
+                ThreadPoolBidirectionalBFSPathFinderSearchBuilder.<DirectedGraphNode>
+                withPathFinder(pathfinder)
+               .withSourceNode(s)
+               .withTargetNode(t)
+               .withForwardNodeExpander(new ForwardNodeExpander())
+               .withBackwardNodeExpander(new BackwardNodeExpander())
+               .withForwardSearchProgressLogger(null)
+               .withBackwardSearchProgressLogger(null)
+               .withSharedSearchProgressLogger(null)
+               .search();
+        
+        assertEquals(4, path.size());
+    }
 }
 
 final class FailingForwardNodeExpander
