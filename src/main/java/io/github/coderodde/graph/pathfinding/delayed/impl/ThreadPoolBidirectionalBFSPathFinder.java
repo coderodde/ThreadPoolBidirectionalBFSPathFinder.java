@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -211,7 +210,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         this.numberOfForwardThreads = Math.max(numberOfForwardThreads, 
                                                MINIMUM_NUMBER_OF_THREADS);
         
-        this.numberOfBackwardThreads = Math.max(numberOfForwardThreads, 
+        this.numberOfBackwardThreads = Math.max(numberOfBackwardThreads, 
                                                 MINIMUM_NUMBER_OF_THREADS);
 
         this.masterThreadSleepDurationNanos = 
@@ -725,6 +724,8 @@ extends AbstractDelayedGraphPathFinder<N> {
                 return;
             }
             
+            shortestPath.clear();
+            
             N current = touchNode;
 
             while (current != null) {
@@ -947,7 +948,6 @@ extends AbstractDelayedGraphPathFinder<N> {
          * 
          * @param toSleep indicates whether to put this thread to sleep or 
          *                wake it up.
-            return isMasterThread;
          */
         void putThreadToSleep(final boolean toSleep) {
             this.sleepRequested = toSleep;
@@ -1225,17 +1225,14 @@ extends AbstractDelayedGraphPathFinder<N> {
                     return;
                 } else {
                     
-                    searchState.currentFrontierDepth++;
+                    final int newDepth = ++searchState.currentFrontierDepth;
                     
-                    currentFrontier = 
-                            searchState.frontierQueues
-                                       .get(currentFrontierDepth + 1);
+                    if (newDepth >= searchState.frontierQueues.size()) {
+                        searchState.frontierQueues.add(new ArrayDeque<>());
+                        searchState.frontierSets  .add(new HashSet<>());
+                    }
                     
-                    searchState.frontierQueues.add(
-                            new ConcurrentLinkedDeque<>());
-                    
-                    searchState.frontierSets.add(
-                            Collections.synchronizedSet(new HashSet<>()));
+                    currentFrontier = searchState.frontierQueues.get(newDepth);
                 }
             }
             

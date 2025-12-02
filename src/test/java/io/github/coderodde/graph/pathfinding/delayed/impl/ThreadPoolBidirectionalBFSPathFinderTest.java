@@ -25,7 +25,8 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     private static final int MAXIMUM_DEGREE = 6;
     private static final int MINIMUM_DELAY = 3;
     private static final int MAXIMUM_DELAY = 40;
-    private static final int REQUESTED_NUMBER_OF_THREADS = 32;
+    private static final int REQUESTED_NUMBER_OF_THREADS_FORWARD  = 1;
+    private static final int REQUESTED_NUMBER_OF_THREADS_BACKWARD = 1;
     private static final int MASTER_THREAD_SLEEP_DURATION_MILLIS = 20;
     private static final int SLAVE_THREAD_SLEEP_DURATION_MILLIS = 10;
     private static final int MASTER_THREAD_TRIALS = 30;
@@ -44,8 +45,8 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
             testPathFinder = 
                 ThreadPoolBidirectionalBFSPathFinderBuilder
                 .<DirectedGraphNode>begin()
-                .withNumberOfForwardThreads(REQUESTED_NUMBER_OF_THREADS)
-                .withNumberOfBackwardThreads(REQUESTED_NUMBER_OF_THREADS)
+                .withNumberOfForwardThreads(REQUESTED_NUMBER_OF_THREADS_FORWARD)
+                .withNumberOfBackwardThreads(REQUESTED_NUMBER_OF_THREADS_BACKWARD)
                 .withMasterThreadSleepDurationMillis(MASTER_THREAD_SLEEP_DURATION_MILLIS)
                 .withSlaveThreadSleepDurationMillis(SLAVE_THREAD_SLEEP_DURATION_MILLIS)
                 .withNumberOfMasterTrials(MASTER_THREAD_TRIALS)
