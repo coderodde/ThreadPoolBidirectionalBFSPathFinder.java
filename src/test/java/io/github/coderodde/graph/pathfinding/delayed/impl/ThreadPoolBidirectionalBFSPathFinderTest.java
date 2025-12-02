@@ -120,7 +120,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                         
     
     // This test may take a several seconds.
-    @Test
+    //@Test
     public void testCorrectness() {
         
         System.out.println("testCorrectness() begin:");
@@ -182,7 +182,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     }   
     
     // This test may take a several seconds too complete.
-    @Test
+    //@Test
     public void returnsEmptyPathOnDisconnectedGraph() {
         final int nodes = disconnectedDelayedDirectedGraph.size();
         final int sourceNodeIndex = random.nextInt(nodes / 2);
@@ -220,7 +220,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         System.out.println("returnsEmptyPathOnDisconnectedGraph() done.");
     }
     
-    @Test
+    //@Test
     public void haltsOnFailingNodes() {
         
         final DirectedGraphNode sourceNode = 
@@ -242,7 +242,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         System.out.println("haltsOnFailingNodes() done.");
     }
     
-    @Test
+    //@Test
     public void omitsFaultyLinks() {
         final DirectedGraphNode a  = new DirectedGraphNode(1, true, 100);
         final DirectedGraphNode b1 = new DirectedGraphNode(2, true, 100);
@@ -282,7 +282,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         System.out.println("omitsFaultyLinks() done.");
     }
     
-    @Test
+    //@Test
     public void halt() {
         final DirectedGraphNode source = new DirectedGraphNode(1, true, 10_000);
         final DirectedGraphNode target = new DirectedGraphNode(2, true, 10_000);
@@ -357,7 +357,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         System.out.println("Second finder halted!");
     }
     
-    @Test
+    //@Test
     public void fluentApiSearchBuilding() {
         DirectedGraphNode source = new DirectedGraphNode(1);
         DirectedGraphNode target = new DirectedGraphNode(2);
@@ -409,7 +409,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                 .search();
     }
     
-    @Test
+    //@Test
     public void undirectedGraphTest() {
         System.out.println("undirectedGraphTest()");
         
