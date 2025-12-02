@@ -1319,8 +1319,10 @@ extends AbstractDelayedGraphPathFinder<N> {
                 this.searchState.frontierSets  .add(new HashSet<>());
             }
             
-            // Discharge the head node in the current depth queue:
+            // Discharge the head node ('current') in the current depth queue:
             currentFrontierQueue.removeFirst();
+            // Memorize 'current' at the current search level:
+            currentFrontierSet.add(current);
             
             final ExpansionThread<N> expansionThread =
                     new ExpansionThread<>(current, nodeExpander);

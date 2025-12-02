@@ -105,7 +105,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         nodeB2.addChild(nodeC);
         
         final List<DirectedGraphNode> path = 
-                testPathFinder.search(
+                 testPathFinder.search(
                         nodeA,
                         nodeC,
                         new ForwardNodeExpander(),
