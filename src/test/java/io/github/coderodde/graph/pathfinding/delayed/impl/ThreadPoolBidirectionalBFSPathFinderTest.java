@@ -121,7 +121,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                         
     
     // This test may take a several seconds.
-    //@Test
+    @Test
     public void testCorrectness() {
         
         System.out.println("testCorrectness() begin:");

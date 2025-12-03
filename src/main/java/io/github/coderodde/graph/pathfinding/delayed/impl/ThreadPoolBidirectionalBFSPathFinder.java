@@ -1131,9 +1131,6 @@ extends AbstractDelayedGraphPathFinder<N> {
         }
         
         private N getTouchNode() {
-            
-            N touchNode = null;
-            
             final int currentQueueIndexForward = 
                     sharedSearchState.forwardSearchState
                                      .currentFrontierDepth;
@@ -1142,25 +1139,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                     sharedSearchState.backwardSearchState
                                      .currentFrontierDepth;
             
-            final Set<N> currentForwardSet = 
-                    sharedSearchState
-                            .forwardSearchState
-                            .frontierSets
-                            .get(currentQueueIndexForward);
-            
-            final Set<N> currentBackwardSet = 
-                    sharedSearchState
-                            .backwardSearchState
-                            .frontierSets
-                            .get(currentQueueIndexBackward);
-            
             final Deque<N> currentForwardQueue = 
-                    sharedSearchState
-                            .forwardSearchState
-                            .frontierQueues
-                            .get(currentQueueIndexForward);
-            
-            final Deque<N> currentBackwardQueue = 
                     sharedSearchState
                             .forwardSearchState
                             .frontierQueues
@@ -1240,6 +1219,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 final N touchNode = getTouchNode();
                 
                 if (touchNode != null) {
+                    sharedSearchState.touchNode = touchNode;
                     sharedSearchState.loadShortestPath();
                     sharedSearchState.unlock();
                     sharedSearchState.requestGlobalStop();
