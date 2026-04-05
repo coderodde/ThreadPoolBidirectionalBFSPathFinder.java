@@ -10,7 +10,7 @@ import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidir
 import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_MASTER_THREAD_SLEEP_DURATION_NANOS;
 import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_EXPANSION_JOIN_DURATION_NANOS;
 import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_LOCK_WAIT_NANOS;
-import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_NUMBER_OF_TRIALS;
+import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_NUMBER_OF_MASTER_TRIALS;
 
 /**
  * @version 2.0.0 (Apr 24, 2024)
@@ -164,7 +164,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderBuilder<N> {
         public Builder<N> withNumberOfMasterTrials(
                 int numberOfMasterTrials) {
             settings.numberOfMasterTrials = 
-                    Math.max(numberOfMasterTrials, MINIMUM_NUMBER_OF_TRIALS);
+                    Math.max(numberOfMasterTrials, MINIMUM_NUMBER_OF_MASTER_TRIALS);
                     
             return this;
         }
