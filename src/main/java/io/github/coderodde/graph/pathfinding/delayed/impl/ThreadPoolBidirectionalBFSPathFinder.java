@@ -1252,9 +1252,13 @@ extends AbstractDelayedGraphPathFinder<N> {
             }
             
             int frontierIndex = searchState.frontierQueues.size() - 1;
+            int nextFrontierIndex = frontierIndex + 1;
             
             Deque<N> topFrontier = 
                 searchState.frontierQueues.get(frontierIndex);
+            
+            Deque<N> nextFrontier = 
+                searchState.frontierQueues.get(nextFrontierIndex);
             
             if (!topFrontier.isEmpty()) {
                 N current = topFrontier.removeFirst();
@@ -1308,24 +1312,76 @@ extends AbstractDelayedGraphPathFinder<N> {
                     return;
                 }
                 
-                int nextFrontierIndex = frontierIndex + 1;
-                
-                Deque<N> nextFrontier = 
-                    searchState.frontierQueues.get(nextFrontierIndex);
-                
                 for (N successor : expansionThread.successorList) {
                     if (searchState.visited.contains(successor)) {
                         continue;
                     }
                     
-                    searchState.frontierQueues
-                               .get(nextFrontierIndex)
-                               .addLast(successor);
-                    
+                    nextFrontier.addLast(successor);
                     searchState.parents.put(successor, current);
                 }
             } else {
+                if (nextFrontier.isEmpty()) {
+                    // Once here, we have a dead end:
+                    sharedSearchState.requestGlobalStop();
+                    return;
+                }
+                
+                Set<N> set1 = searchState.frontierSets.get(frontierIndex);
+                Set<N> set2 = searchState.oppositeSearchState.visited;
+                
+                N meetingPoint = intersect(set1, set2);
+                
+                if (meetingPoint != null) {
+                    sharedSearchState.requestGlobalStop();
+                    
+                    sharedSearchState.shortestPath.addAll(
+                        tracebackPath(meetingPoint,
+                                      searchState.parents,
+                                      searchState.oppositeSearchState.parents));
+                }
             }
+        }
+        
+        private static <N> N intersect(Set<N> set1, Set<N> set2) {
+            if (set1.size() < set2.size()) {
+                for (N node : set1) {
+                    if (set2.contains(node)) {
+                        return node;
+                    }
+                }
+            } else {
+                for (N node : set2) {
+                    if (set1.contains(node)) {
+                        return node;
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        private static <N> List<N> tracebackPath(N meetingNode,
+                                                 Map<N, N> parents1,
+                                                 Map<N, N> parents2) {
+            List<N> path = new ArrayList<>();
+            N node = meetingNode;
+            
+            while (node != null) {
+                path.add(node);
+                node = parents1.get(node);
+            }
+            
+            Collections.reverse(path);
+            
+            node = parents2.get(node);
+            
+            while (node != null) {
+                path.add(node);
+                node = parents2.get(node);
+            }
+            
+            return path;
         }
         
         private void processCurrentInSlaveThreadOld() {
