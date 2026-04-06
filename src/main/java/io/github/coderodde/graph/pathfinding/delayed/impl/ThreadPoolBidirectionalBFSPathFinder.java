@@ -8,6 +8,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -787,7 +788,8 @@ extends AbstractDelayedGraphPathFinder<N> {
          * This map maps each discovered node to its predecessor on the current 
          * shortest path.
          */
-        private final Map<N, N> parents = new ConcurrentHashMap<>();
+        private final Map<N, N> parents = 
+                Collections.synchronizedMap(new HashMap<>());
         
         /**
          * The set storing all visited nodes.
@@ -1065,11 +1067,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 if (isMasterThread) {
                     processCurrentInMasterThread();
                 } else {
-                    try {
-                        processCurrentInSlaveThread();
-                    } catch (InterruptedException ex) {
-                        
-                    }
+                    processCurrentInSlaveThread();
                 }
             }
         }
@@ -1241,7 +1239,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             }
         }
         
-        private void processCurrentInSlaveThread() throws InterruptedException {
+        private void processCurrentInSlaveThread() {
             if (sharedSearchState.globalStopRequested()) {
                 return;
             }
@@ -1251,7 +1249,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 return;
             }
             
-            int frontierIndex = searchState.frontierQueues.size() - 1;
+            int frontierIndex = searchState.frontierQueues.size() - 2;
             int nextFrontierIndex = frontierIndex + 1;
             
             Deque<N> topFrontier = 
@@ -1291,11 +1289,10 @@ extends AbstractDelayedGraphPathFinder<N> {
                             expansionJoinDurationNanos / 1_000_000L, 
                       (int)(expansionJoinDurationNanos % 1_000_000L));
                 } catch (InterruptedException ex) {
-                    
                     LOGGER.log(Level.SEVERE, 
                                "Expansion thread interrupted: {0}",
                                ex);
-                    throw ex;
+                    return;
                 }
                 
                 long tb = System.currentTimeMillis();
@@ -1317,10 +1314,13 @@ extends AbstractDelayedGraphPathFinder<N> {
                         continue;
                     }
                     
+//                    int nextDistance = 
+                    
                     nextFrontier.addLast(successor);
                     searchState.parents.put(successor, current);
                 }
             } else {
+                // Here, topFrontier is empty:
                 if (nextFrontier.isEmpty()) {
                     // Once here, we have a dead end:
                     sharedSearchState.requestGlobalStop();
@@ -1340,6 +1340,9 @@ extends AbstractDelayedGraphPathFinder<N> {
                                       searchState.parents,
                                       searchState.oppositeSearchState.parents));
                 }
+                
+                searchState.frontierQueues.addLast(new SynchronizedDeque<>());
+                searchState.frontierSets.addLast(ConcurrentHashMap.newKeySet());
             }
         }
         
