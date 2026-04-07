@@ -66,9 +66,9 @@ public abstract class AbstractDelayedGraphPathFinder<N> {
      *                                     child nodes.
      * @param backwardSearchNodeExpander   the expander generating all the 
      *                                     parent nodes.                           
-     * @param forwardSearchProgressLogger  the forward search related logger.
-     * @param backwardSearchProgressLogger the backward search related logger.
-     * @param sharedSearchProgressLogger   the shared logger.
+     * @param sharedSearchProgressLogger   the shared progress listener.
+     * @param forwardSearchProgressListener  the forward search listener.
+     * @param backwardSearchProgressListener the backward search listener.
      * @return the shortest path as a list of nodes, or an empty list if the 
      *         target is not reachable from the source.
      */
@@ -77,9 +77,10 @@ public abstract class AbstractDelayedGraphPathFinder<N> {
                final N target,
                final AbstractNodeExpander<N> forwardSearchNodeExpander,
                final AbstractNodeExpander<N> backwardSearchNodeExpander,
-               final ProgressLogger<N> forwardSearchProgressLogger,
-               final ProgressLogger<N> backwardSearchProgressLogger,
-               final ProgressLogger<N> sharedSearchProgressLogger);
+               final SharedProgressListener<N> sharedSearchProgressLogger,
+               final DirectionProgressListener<N> forwardSearchProgressListener,
+               final DirectionProgressListener<N>
+                   backwardSearchProgressListener);
 
     /**
      * Searches for the shortest path in an <b>undirected</b> graph.
@@ -98,16 +99,17 @@ public abstract class AbstractDelayedGraphPathFinder<N> {
         search(final N source,
                final N target,
                final AbstractNodeExpander<N> nodeExpander,
-               final ProgressLogger<N> forwardSearchProgressLogger,
-               final ProgressLogger<N> backwardSearchProgressLogger,
-               final ProgressLogger<N> sharedSearchProgressLogger) {
+               final SharedProgressListener<N> sharedSearchProgressLogger,
+               final DirectionProgressListener<N> forwardSearchProgressLogger,
+               final DirectionProgressListener<N> backwardSearchProgressLogger)
+    {
         return search(source,
                       target,
                       nodeExpander,
                       nodeExpander,
+                      sharedSearchProgressLogger,
                       forwardSearchProgressLogger,
-                      backwardSearchProgressLogger,
-                      sharedSearchProgressLogger);
+                      backwardSearchProgressLogger);
     }
         
     public abstract void halt();

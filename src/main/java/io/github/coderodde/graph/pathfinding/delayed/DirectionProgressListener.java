@@ -12,7 +12,7 @@ import java.util.Objects;
  * @version 1.0.0 (March 17, 2024)
  * @param <N> the actual node type.
  */
-public class ProgressLogger<N> {
+public class DirectionProgressListener<N> {
     
     /**
      * The entry class describing a node and its expansion time duration.
@@ -57,17 +57,6 @@ public class ProgressLogger<N> {
      */
     private long sumOfExpansionDurations = 0L;
     
-    /**
-     * This method should be called whenever the search is initiated.
-     * 
-     * @param source the source node.
-     * @param target the target node.
-     */
-    public void onBeginSearch(final N source, final N target) {
-        expansionEntries.clear();
-        sumOfExpansionDurations = 0L;
-    }
-
     /**
      * This method should be called whenever the search expands the node 
      * {@code node}.
@@ -143,22 +132,4 @@ public class ProgressLogger<N> {
      *             improved by the search.
      */
     public void onNeighborImprovement(final N node) {}
-
-    /**
-     * This method should be called whenever the search has found a shortest 
-     * path.
-     * 
-     * @param path the shortest path found. 
-     */
-    public void onShortestPath(final List<N> path) {}
-
-    /**
-     * This method should be called whenever the target node is not reachable 
-     * from the source node and the search process must stop without finding a 
-     * path.
-     * 
-     * @param source the requested source node.
-     * @param target the requested target node.
-     */
-    public void onTargetUnreachable(final N source, final N target) {}
 }

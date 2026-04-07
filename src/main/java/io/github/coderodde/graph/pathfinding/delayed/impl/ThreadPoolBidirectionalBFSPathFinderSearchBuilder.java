@@ -2,7 +2,7 @@ package io.github.coderodde.graph.pathfinding.delayed.impl;
 
 import io.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
 import io.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
-import io.github.coderodde.graph.pathfinding.delayed.ProgressLogger;
+import io.github.coderodde.graph.pathfinding.delayed.DirectionProgressListener;
 import java.util.List;
 import java.util.Objects;
 
@@ -14,9 +14,9 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         N target;
         AbstractNodeExpander<N> forwardSearchExpander;
         AbstractNodeExpander<N> backwardSearchExpander;
-        ProgressLogger<N> forwardSearchProgressLogger;
-        ProgressLogger<N> backwardSearchProgressLogger;
-        ProgressLogger<N> sharedSearchProgressLogger;
+        DirectionProgressListener<N> forwardSearchProgressLogger;
+        DirectionProgressListener<N> backwardSearchProgressLogger;
+        DirectionProgressListener<N> sharedSearchProgressLogger;
     }
     
     public static <N> SourceNodeSelector<N> 
@@ -106,7 +106,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
             
         public BackwardSearchProgressLoggerSelector<N> 
         withForwardSearchProgressLogger(
-                final ProgressLogger<N> forwardSearchProgressLogger) {
+                final DirectionProgressListener<N> forwardSearchProgressLogger) {
             settings.forwardSearchProgressLogger = forwardSearchProgressLogger;
             return new BackwardSearchProgressLoggerSelector<>(settings);
         }
@@ -131,7 +131,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         
         public BackwardSearchProgressLoggerSelector<N> 
         withForwardSearchProgressLogger(
-                final ProgressLogger<N> forwardSearchProgressLogger) {
+                final DirectionProgressListener<N> forwardSearchProgressLogger) {
             settings.forwardSearchProgressLogger = forwardSearchProgressLogger;
             return new BackwardSearchProgressLoggerSelector<>(settings);
         }
@@ -146,7 +146,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         
         public BackwardSearchProgressLoggerSelector<N> 
         withForwardSearchProgressLogger(
-                final ProgressLogger<N> forwardSearchProgressLogger) {
+                final DirectionProgressListener<N> forwardSearchProgressLogger) {
             settings.forwardSearchProgressLogger = forwardSearchProgressLogger;
             return new BackwardSearchProgressLoggerSelector<>(settings);
         }
@@ -161,7 +161,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         
         public SharedSearchProgressLoggerSelector<N> 
         withBackwardSearchProgressLogger(
-                final ProgressLogger<N> backwardSearchProgressLogger) {
+                final DirectionProgressListener<N> backwardSearchProgressLogger) {
             settings.backwardSearchProgressLogger = 
                      backwardSearchProgressLogger;
             
@@ -177,7 +177,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         }
         
         public Search<N> withSharedSearchProgressLogger(
-                final ProgressLogger<N> sharedSearchProgressLogger) {
+                final DirectionProgressListener<N> sharedSearchProgressLogger) {
             
             this.settings.sharedSearchProgressLogger = 
                           sharedSearchProgressLogger;
@@ -223,7 +223,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         
         public BackwardSearchProgressLoggerSelector<N> 
         withForwardSearchProgressLogger(
-                final ProgressLogger<N> forwardSearchProgressLogger) {
+                final DirectionProgressListener<N> forwardSearchProgressLogger) {
             settings.forwardSearchProgressLogger = forwardSearchProgressLogger;
             return new BackwardSearchProgressLoggerSelector<>(settings);
         }
