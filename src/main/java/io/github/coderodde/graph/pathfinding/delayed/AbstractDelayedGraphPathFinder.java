@@ -77,7 +77,7 @@ public abstract class AbstractDelayedGraphPathFinder<N> {
                final N target,
                final AbstractNodeExpander<N> forwardSearchNodeExpander,
                final AbstractNodeExpander<N> backwardSearchNodeExpander,
-               final SharedProgressListener<N> sharedSearchProgressListener,
+               final SharedSearchProgressListener<N> sharedSearchProgressListener,
                final DirectionProgressListener<N> forwardSearchProgressListener,
                final DirectionProgressListener<N>
                    backwardSearchProgressListener);
@@ -99,7 +99,7 @@ public abstract class AbstractDelayedGraphPathFinder<N> {
         search(final N source,
                final N target,
                final AbstractNodeExpander<N> nodeExpander,
-               final SharedProgressListener<N> sharedSearchProgressLogger,
+               final SharedSearchProgressListener<N> sharedSearchProgressLogger,
                final DirectionProgressListener<N> forwardSearchProgressLogger,
                final DirectionProgressListener<N> backwardSearchProgressLogger)
     {

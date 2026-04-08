@@ -3,7 +3,7 @@ package io.github.coderodde.graph.pathfinding.delayed.impl;
 import io.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
 import io.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import io.github.coderodde.graph.pathfinding.delayed.DirectionProgressListener;
-import io.github.coderodde.graph.pathfinding.delayed.SharedProgressListener;
+import io.github.coderodde.graph.pathfinding.delayed.SharedSearchProgressListener;
 import java.util.List;
 import java.util.Objects;
 
@@ -15,7 +15,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         N target;
         AbstractNodeExpander<N> forwardSearchExpander;
         AbstractNodeExpander<N> backwardSearchExpander;
-        SharedProgressListener<N> sharedSearchProgressListener;
+        SharedSearchProgressListener<N> sharedSearchProgressListener;
         DirectionProgressListener<N> forwardSearchProgressListener;
         DirectionProgressListener<N> backwardSearchProgressListener;
     }
@@ -23,6 +23,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
     public static <N> SourceNodeSelector<N> 
         withPathFinder(AbstractDelayedGraphPathFinder<N> finder) {
         Settings<N> settings = new Settings<>();
+        
         settings.finder = 
                 Objects.requireNonNull(finder, "The input finder is null.");
         
@@ -65,14 +66,14 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
             this.settings = settings;
         }
         
-        public UndirectedGraphNodeExpanderSelector<N> 
+        public SharedSearchProgressListenerSelector<N> 
             withUndirectedGraphNodeExpander(
                     final AbstractNodeExpander<N> expander) {
                 
             Objects.requireNonNull(expander, "The input expander is null.");
             settings.forwardSearchExpander  = expander;
             settings.backwardSearchExpander = expander;
-            return new UndirectedGraphNodeExpanderSelector<>(settings);
+            return new SharedSearchProgressListenerSelector<>(settings);
         }
             
         public BackwardNodeExpanderSelector<N> 
@@ -93,23 +94,15 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
             this.settings = settings;
         }
         
-        public DirectedSearch<N> 
+        public SharedSearchProgressListenerSelector<N> 
             withBackwardNodeExpander(
-                    final AbstractNodeExpander<N> backwardSearchExpander) {
-                
-            Objects.requireNonNull(
-                    backwardSearchExpander,
-                    "The input backward search expander is null.");
-            
-            settings.backwardSearchExpander = backwardSearchExpander;
-            return new DirectedSearch<>(settings);
+                    final AbstractNodeExpander<N> expander) {
+            settings.backwardSearchExpander = expander;
+            return new SharedSearchProgressListenerSelector<>(settings);
         }
             
-        public BackwardSearchProgressLoggerSelector<N> 
-        withForwardSearchProgressLogger(
-                final DirectionProgressListener<N> forwardSearchProgressLogger) {
-            settings.forwardSearchProgressListener = forwardSearchProgressLogger;
-            return new BackwardSearchProgressLoggerSelector<>(settings);
+        public DirectedSearch<N> search() {
+            return new DirectedSearch<>(settings);
         }
     }
     
@@ -118,6 +111,13 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
 
         UndirectedGraphNodeExpanderSelector(final Settings<N> settings) {
             this.settings = settings;
+        }
+        
+        public SharedSearchProgressListenerSelector<N> 
+        withSharedSearchProgressListener(
+                final SharedSearchProgressListener<N> listener) {
+            settings.sharedSearchProgressListener = listener;
+            return new SharedSearchProgressListenerSelector<>(settings);
         }
         
         public List<N> search() {
@@ -129,79 +129,59 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
                     null, 
                     null);
         }
-        
-        public BackwardSearchProgressLoggerSelector<N> 
-        withForwardSearchProgressLogger(
-                final DirectionProgressListener<N> forwardSearchProgressLogger) {
-            settings.forwardSearchProgressListener = forwardSearchProgressLogger;
-            return new BackwardSearchProgressLoggerSelector<>(settings);
-        }
     }
     
-    public static final class ForwardSearchProgressLoggerSelector<N> {
+    public static final class SharedSearchProgressListenerSelector<N> {
         private final Settings<N> settings;
-        
-        ForwardSearchProgressLoggerSelector(final Settings<N> settings) {
+
+        SharedSearchProgressListenerSelector(final Settings<N> settings) {
             this.settings = settings;
         }
         
-        public BackwardSearchProgressLoggerSelector<N> 
-        withForwardSearchProgressLogger(
-                final DirectionProgressListener<N> forwardSearchProgressLogger) {
-            settings.forwardSearchProgressListener = forwardSearchProgressLogger;
-            return new BackwardSearchProgressLoggerSelector<>(settings);
-        }
-    }
-    
-    public static final class BackwardSearchProgressLoggerSelector<N> {
-        private final Settings<N> settings;
-        
-        BackwardSearchProgressLoggerSelector(final Settings<N> settings) {
-            this.settings = settings;
-        }
-        
-        public SharedSearchProgressLoggerSelector<N> 
-        withBackwardSearchProgressLogger(
-                final DirectionProgressListener<N> backwardSearchProgressLogger) {
-            settings.backwardSearchProgressListener = 
-                     backwardSearchProgressLogger;
-            
-            return new SharedSearchProgressLoggerSelector<>(settings);
-        }
-    }
-    
-    public static final class SharedSearchProgressLoggerSelector<N> {
-        private final Settings<N> settings;
-        
-        SharedSearchProgressLoggerSelector(final Settings<N> settings) {
-            this.settings = settings;
-        }
-        
-        public Search<N> withSharedSearchProgressLogger(
-                final SharedProgressListener<N> sharedSearchProgressLogger) {
-            
-            this.settings.sharedSearchProgressListener = 
-                          sharedSearchProgressLogger;
-            
-            return new Search<>(settings);
-        }
-    }
-    
-    public static final class Search<N> {
-        private final Settings<N> settings;
-        
-        Search(final Settings<N> settings) {
-            this.settings = settings;
+        public ForwardSearchProgressListenerSelector<N> 
+        withSharedSearchProgressListener(
+                final SharedSearchProgressListener<N> listener) {
+            this.settings.sharedSearchProgressListener = listener;
+            return new ForwardSearchProgressListenerSelector<>(settings);
         }
         
         public List<N> search() {
-            return settings.finder.search(settings.source,
-                                          settings.target,
-                                          settings.forwardSearchExpander,
-                                          settings.backwardSearchExpander,
-                                          settings.sharedSearchProgressListener,
-                                          settings.forwardSearchProgressListener, 
-                                          settings.backwardSearchProgressListener); 
+            return settings.finder.search(
+                    settings.source, 
+                    settings.target, 
+                    settings.forwardSearchExpander,
+                    settings.backwardSearchExpander,
+                    settings.sharedSearchProgressListener,
+                    settings.forwardSearchProgressListener,
+                    settings.backwardSearchProgressListener);
+        }
+    }
+    
+    public static final class ForwardSearchProgressListenerSelector<N> {
+        private final Settings<N> settings;
+        
+        ForwardSearchProgressListenerSelector(final Settings<N> settings) {
+            this.settings = settings;
+        }
+        
+        public BackwardSearchProgressListenerSelector<N> 
+        withForwardSearchProgressListener(
+                final DirectionProgressListener<N> listener) {
+            settings.forwardSearchProgressListener = listener;
+            return new BackwardSearchProgressListenerSelector<>(settings);
+        }
+    }
+    
+    public static final class BackwardSearchProgressListenerSelector<N> {
+        private final Settings<N> settings;
+        
+        BackwardSearchProgressListenerSelector(final Settings<N> settings) {
+            this.settings = settings;
+        }
+        
+        public DirectedSearch<N> withBackwardSearchProgressListener(final DirectionProgressListener<N> listener) {
+            settings.backwardSearchProgressListener = listener;
+            return new DirectedSearch<>(settings);
         }
     }
     
@@ -223,11 +203,11 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
                     settings.backwardSearchProgressListener);
         }
         
-        public BackwardSearchProgressLoggerSelector<N> 
+        public BackwardSearchProgressListenerSelector<N> 
         withForwardSearchProgressLogger(
                 final DirectionProgressListener<N> forwardSearchProgressLogger) {
             settings.forwardSearchProgressListener = forwardSearchProgressLogger;
-            return new BackwardSearchProgressLoggerSelector<>(settings);
+            return new BackwardSearchProgressListenerSelector<>(settings);
         }
     }
 }

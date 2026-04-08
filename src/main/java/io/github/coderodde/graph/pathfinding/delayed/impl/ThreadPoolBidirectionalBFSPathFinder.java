@@ -3,7 +3,7 @@ package io.github.coderodde.graph.pathfinding.delayed.impl;
 import io.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
 import io.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import io.github.coderodde.graph.pathfinding.delayed.DirectionProgressListener;
-import io.github.coderodde.graph.pathfinding.delayed.SharedProgressListener;
+import io.github.coderodde.graph.pathfinding.delayed.SharedSearchProgressListener;
 import java.util.ArrayDeque;
 
 import java.util.ArrayList;
@@ -207,7 +207,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             final int  masterThreadTrials,
             final long expansionThreadJoinDurationNanos,
             final long lockWaitDurationNanos,
-            final SharedProgressListener<N> sharedProgressListener,
+            final SharedSearchProgressListener<N> sharedProgressListener,
             final DirectionProgressListener<N> forwardProgressListener,
             final DirectionProgressListener<N> backwardProgressListener) {
         
@@ -343,7 +343,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                final N target, 
                final AbstractNodeExpander<N> forwardSearchNodeExpander, 
                final AbstractNodeExpander<N> backwardSearchNodeExpander, 
-               final SharedProgressListener<N> sharedSearchProgressListener,
+               final SharedSearchProgressListener<N> sharedSearchProgressListener,
                final DirectionProgressListener<N> forwardSearchProgressListener, 
                final DirectionProgressListener<N> 
                        backwardSearchProgressListener) {

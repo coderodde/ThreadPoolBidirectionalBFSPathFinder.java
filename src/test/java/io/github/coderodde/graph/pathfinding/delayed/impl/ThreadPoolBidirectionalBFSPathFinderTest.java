@@ -25,8 +25,8 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     private static final int MAXIMUM_DEGREE = 6;
     private static final int MINIMUM_DELAY = 3;
     private static final int MAXIMUM_DELAY = 40;
-    private static final int REQUESTED_NUMBER_OF_THREADS_FORWARD  = 16;
-    private static final int REQUESTED_NUMBER_OF_THREADS_BACKWARD = 16;
+    private static final int REQUESTED_NUMBER_OF_THREADS_FORWARD  = 32;
+    private static final int REQUESTED_NUMBER_OF_THREADS_BACKWARD = 32;
     private static final int MASTER_THREAD_SLEEP_DURATION_MILLIS = 20;
     private static final int SLAVE_THREAD_SLEEP_DURATION_MILLIS = 10;
     private static final int MASTER_THREAD_TRIALS = 30;
@@ -46,9 +46,12 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                 ThreadPoolBidirectionalBFSPathFinderBuilder
                 .<DirectedGraphNode>begin()
                 .withNumberOfForwardThreads(REQUESTED_NUMBER_OF_THREADS_FORWARD)
-                .withNumberOfBackwardThreads(REQUESTED_NUMBER_OF_THREADS_BACKWARD)
-                .withMasterThreadSleepDurationMillis(MASTER_THREAD_SLEEP_DURATION_MILLIS)
-                .withSlaveThreadSleepDurationMillis(SLAVE_THREAD_SLEEP_DURATION_MILLIS)
+                .withNumberOfBackwardThreads(
+                        REQUESTED_NUMBER_OF_THREADS_BACKWARD)
+                .withMasterThreadSleepDurationMillis(
+                        MASTER_THREAD_SLEEP_DURATION_MILLIS)
+                .withSlaveThreadSleepDurationMillis(
+                        SLAVE_THREAD_SLEEP_DURATION_MILLIS)
                 .withNumberOfMasterTrials(MASTER_THREAD_TRIALS)
                 .withExpansionDurationMillis(EXPANSION_JOIN_DURATION_MILLIS)
                 .withLockWaitMillis(LOCK_WAIT_DURATION_MILLIS)
@@ -355,7 +358,6 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                         .withSourceNode(source)
                         .withTargetNode(target)
                         .withForwardNodeExpander(forwardNodeExpander)
-                        .withBackwardNodeExpander(backwardNodeExpander)
                         .search();
             }
         };
@@ -369,7 +371,6 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                         .withSourceNode(source)
                         .withTargetNode(target)
                         .withForwardNodeExpander(forwardNodeExpander)
-                        .withBackwardNodeExpander(backwardNodeExpander)
                         .search();
             }
         };
@@ -419,9 +420,9 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                 .withSourceNode(source)
                 .withTargetNode(target)
                 .withUndirectedGraphNodeExpander(forwardNodeExpander)
-                .withForwardSearchProgressLogger(null)
-                .withBackwardSearchProgressLogger(null)
-                .withSharedSearchProgressLogger(null)
+                .withSharedSearchProgressListener(null)
+                .withForwardSearchProgressListener(null)
+                .withBackwardSearchProgressListener(null)
                 .search();
         
         ThreadPoolBidirectionalBFSPathFinderSearchBuilder.
@@ -437,10 +438,11 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                 .withSourceNode(source)
                 .withTargetNode(target)
                 .withForwardNodeExpander(forwardNodeExpander)
+                
                 .withBackwardNodeExpander(backwardNodeExpander)
-                .withForwardSearchProgressLogger(null)
-                .withBackwardSearchProgressLogger(null)
-                .withSharedSearchProgressLogger(null)
+                .withSharedSearchProgressListener(null)
+                .withForwardSearchProgressListener(null)
+                .withBackwardSearchProgressListener(null)
                 .search();
     }
     
@@ -476,9 +478,6 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                .withTargetNode(t)
                .withForwardNodeExpander(new ForwardNodeExpander())
                .withBackwardNodeExpander(new BackwardNodeExpander())
-               .withForwardSearchProgressLogger(null)
-               .withBackwardSearchProgressLogger(null)
-               .withSharedSearchProgressLogger(null)
                .search();
         
         assertEquals(4, path.size());
