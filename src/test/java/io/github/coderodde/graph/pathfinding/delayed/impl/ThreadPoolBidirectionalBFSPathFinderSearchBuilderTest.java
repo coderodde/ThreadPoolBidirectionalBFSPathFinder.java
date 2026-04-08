@@ -8,7 +8,7 @@ import org.junit.Test;
 public class ThreadPoolBidirectionalBFSPathFinderSearchBuilderTest {
 
     private final Integer source = 1; // source
-    private final Integer target = 2; // target
+    private final Integer t = 2; // target
     private final AbstractNodeExpander<Integer> expander1 = expander();
     private final AbstractNodeExpander<Integer> expander2 = expander1;
     private final AbstractDelayedGraphPathFinder<Integer> finder = 
@@ -20,14 +20,14 @@ public class ThreadPoolBidirectionalBFSPathFinderSearchBuilderTest {
         ThreadPoolBidirectionalBFSPathFinderSearchBuilder
             .withPathFinder(finder)
             .withSourceNode(source)
-            .withTargetNode(target)
+            .withTargetNode(t)
             .withUndirectedGraphNodeExpander(expander1)
             .search();
         
         ThreadPoolBidirectionalBFSPathFinderSearchBuilder
             .withPathFinder(finder)
             .withSourceNode(source)
-            .withTargetNode(target)
+            .withTargetNode(t)
             .withForwardNodeExpander(expander1)
             .withBackwardNodeExpander(expander2)
             .search();
@@ -35,7 +35,7 @@ public class ThreadPoolBidirectionalBFSPathFinderSearchBuilderTest {
         ThreadPoolBidirectionalBFSPathFinderSearchBuilder
             .withPathFinder(finder)
             .withSourceNode(source)
-            .withTargetNode(target)
+            .withTargetNode(t)
             .withUndirectedGraphNodeExpander(expander1)
             .withSharedSearchProgressListener(null)
             .withForwardSearchProgressListener(null)
@@ -45,7 +45,7 @@ public class ThreadPoolBidirectionalBFSPathFinderSearchBuilderTest {
         ThreadPoolBidirectionalBFSPathFinderSearchBuilder
             .withPathFinder(finder)
             .withSourceNode(source)
-            .withTargetNode(target)
+            .withTargetNode(t)
             .withForwardNodeExpander(expander1)
             .withBackwardNodeExpander(expander2)
             .withSharedSearchProgressListener(null)

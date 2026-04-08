@@ -248,6 +248,25 @@ extends AbstractDelayedGraphPathFinder<N> {
         this.backwardProgressLogger = backwardProgressListener;
     }
     
+    /**
+     * Constructs this path finder.
+     * 
+     * @param numberOfForwardThreads  the number of forward search threads.
+     * @param numberOfBackwardThreads the number of backward search threads.
+     * @param masterThreadSleepDurationNanos the number of nanoseconds a master 
+     *                                       thread sleeps whenever it discovers 
+     *                                       the frontier queue being empty.
+     * @param slaveThreadSleepDurationNanos  the number of nanoseconds a slave
+     *                                       thread sleeps whenever it discovers 
+     *                                       the frontier queue being empty.
+     * @param masterThreadTrials the number of times the master thread 
+     *                           hibernates itself before terminating the entire 
+     *                           search.
+     * @param expansionThreadJoinDurationNanos the number of milliseconds to 
+     *                                         wait for the expansion thread.
+     * @param lockWaitDurationNanos the number of milliseconds to wait for the 
+     *                              lock.
+     */
     public ThreadPoolBidirectionalBFSPathFinder(
             final int  numberOfForwardThreads,
             final int  numberOfBackwardThreads,
@@ -306,7 +325,7 @@ extends AbstractDelayedGraphPathFinder<N> {
     }
     
     public SharedSearchProgressListener getSharedSearchProgressListener() {
-        return sharedSearchProgressListener;
+        return sharedSearchProgressListener;    
     }
     
     public DirectionProgressListener getForwardProgressListener() {
@@ -434,9 +453,6 @@ extends AbstractDelayedGraphPathFinder<N> {
         sharedSearchState.setForwardSearchState(forwardSearchState);
         sharedSearchState.setBackwardSearchState(backwardSearchState);
         
-//        forwardSearchState.setOppositeSearchState(backwardSearchState);
-//        backwardSearchState.setOppositeSearchState(forwardSearchState);
-        
         // The array holding all forward slave threads and the forward master
         // thread:
         final ForwardSearchThread<N>[] forwardSearchThreads =
@@ -549,8 +565,6 @@ extends AbstractDelayedGraphPathFinder<N> {
         // Count the number of expanded nodes over all threads:
         this.numberOfExpandedNodes = 0;
         
-//        forwardSearchState.lockThreadSetMutex();
-//        
         for (final AbstractSearchThread<N> thread 
                 : forwardSearchState.runningThreadSet) {
             
@@ -562,8 +576,6 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             this.numberOfExpandedNodes += thread.numberOfExpandedNodes;
         }
-        
-//        forwardSearchState.unlockThreadSetMutex();
 
         INSTANCE_MAP.remove(this);
         
@@ -600,7 +612,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         
         private final N node;
         private final AbstractNodeExpander<N> expander;
-        private volatile List<N> successorList = Collections.emptyList();
+        private volatile List<N> successorList;
         
         ExpansionThread(final N node,
                         final AbstractNodeExpander<N> expander) {
@@ -617,7 +629,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                            "Could not expand article node \"{0}\": {1}", 
                            new Object[]{ node, ex });
                 
-                successorList = Collections.emptyList();
+                successorList = List.of();
             }
         }
         
@@ -673,13 +685,13 @@ extends AbstractDelayedGraphPathFinder<N> {
          * 
          * @return a flag indicating that the earliest path is found.
          */
-        boolean pathIsReady() {
+        private boolean pathIsReady() {
             if (touchNode == null) {
                 return false;
             }
             
-            final N forwardSearchHead  = forwardSearchState.getQueueHead();
-            final N backwardSearchHead = backwardSearchState.getQueueHead();
+            final N forwardSearchHead  = forwardSearchState.peekQueueHead();
+            final N backwardSearchHead = backwardSearchState.peekQueueHead();
             
             if (forwardSearchHead == null || backwardSearchHead == null) {
                 return false;
@@ -692,19 +704,30 @@ extends AbstractDelayedGraphPathFinder<N> {
             return distance > bestPathLengthSoFar;
         }
         
-        void requestGlobalHalt() {
+        /**
+         * Requests the premature halt.
+         */
+        private void requestGlobalHalt() {
             haltRequested = true;
         }
         
+        /**
+         * Reads the halting flag.
+         * 
+         * @return the halting flag. 
+         */
         boolean globalHaltRequested() {
             return haltRequested;
         }
         
-        void setForwardSearchState(final SearchState<N> forwardSearchState) {
+        private void setForwardSearchState(
+                final SearchState<N> forwardSearchState) {
+            
             this.forwardSearchState = forwardSearchState;
         }
         
-        void setBackwardSearchState(final SearchState<N> backwardSearchState) {
+        private void setBackwardSearchState(
+                final SearchState<N> backwardSearchState) {
             this.backwardSearchState = backwardSearchState;
         }
         
@@ -713,18 +736,23 @@ extends AbstractDelayedGraphPathFinder<N> {
          * 
          * @throws Exception if mutex acquisition fails.
          */
-        void lock() {
+        private void lock() {
             mutex.acquireUninterruptibly();
         }
         
         /**
          * Unlocks this shared state.
          */
-        void unlock() {
+        private void unlock() {
             mutex.release();
         }
         
-        void updateSearchState(final N current) {
+        /**
+         * Tries to update the meeting node.
+         * 
+         * @param current the meeting node candidate. 
+         */
+        private void updateTouchNode(final N current) {
             if (forwardSearchState .containsNode(current) &&
                 backwardSearchState.containsNode(current)) {
                 
@@ -748,7 +776,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          * 
          * @throws Exception if mutex acquisition fails.
          */
-        List<N> getShortestPath() {
+        private List<N> getShortestPath() {
             loadShortestPath();
             return shortestPath;
         }
@@ -756,7 +784,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         /**
          * Loads a shortest path if there is any path at all.
          */
-        void loadShortestPath() {
+        private void loadShortestPath() {
             if (touchNode == null) {
                 // No paths at all.
                 return;
@@ -829,25 +857,52 @@ extends AbstractDelayedGraphPathFinder<N> {
          *                    state object is used in the backward search, this 
          *                    node should be the target node.
          */
-        SearchState(final N initialNode) {
+        private SearchState(final N initialNode) {
             queue.addLast(initialNode);
             parents.put(initialNode, null);
             distances.put(initialNode, 0);
         }
         
-        boolean containsNode(final N node) {
+        /**
+         * Returns {@code true} only if the {@code node} was previously 
+         * encountered.
+         * 
+         * @param node the node to test.
+         * 
+         * @return {@code true} if {@code node} was previously encountered.
+         */
+        private boolean containsNode(final N node) {
             return parents.containsKey(node);
         }
         
-        int getDistanceOf(final N node) {
+        /**
+         * Get the best known distance from the terminal node to {@code node}.
+         * 
+         * @param node the node to test.
+         * 
+         * @return the best known distance to {@code node}.
+         */
+        private int getDistanceOf(final N node) {
             return distances.get(node);
         }
         
-        N getQueueHead() {
+        /**
+         * Returns the head node of the queue or {@code null} if the queue is 
+         * empty.
+         * 
+         * @return the queue head node.
+         */
+        private N peekQueueHead() {
             return queue.peekFirst();
         }
         
-        N removeQueueHead() {
+        /**
+         * Removes and returns the queue head node if the queue is non-empty.
+         * Returns {@code null} otherwise.
+         * 
+         * @return the queue head node. 
+         */
+        private N removeQueueHead() {
             if (queue.isEmpty()) {
                 return null;
             }
@@ -855,6 +910,15 @@ extends AbstractDelayedGraphPathFinder<N> {
             return queue.remove();
         }
         
+        /**
+         * Attempts to set the arc {@code <predecessor, current>}.
+         * 
+         * @param current     the head node of the arc.
+         * @param predecessor the tail node of the arc.
+         * 
+         * @return {@code true} if and only if the input arc was not already 
+         *         present in the search data structures.
+         */
         private boolean trySetNodeInfo(final N current, final N predecessor) {
             if (distances.containsKey(current)) {
                 // Nothing to set.
@@ -867,6 +931,12 @@ extends AbstractDelayedGraphPathFinder<N> {
             return true;
         }
         
+        /**
+         * Attempts to tighten the distance estimate for {@code node}.
+         * 
+         * @param node        the node whose distance estimate to tighten.
+         * @param predecessor the predecessor node of {@code node}.
+         */
         private void tryUpdateIfImprovementPossible(
             final N node, 
             final N predecessor) {
@@ -877,11 +947,17 @@ extends AbstractDelayedGraphPathFinder<N> {
             }
         }
         
-        void lockThreadSetMutex() {
+        /**
+         * Locks the mutex for search threads.
+         */
+        private void lockThreadSetMutex() {
             threadSetsMutex.acquireUninterruptibly();
         }
         
-        void unlockThreadSetMutex() {
+        /**
+         * Unlocks the mutex for search threads.
+         */
+        private void unlockThreadSetMutex() {
             threadSetsMutex.release();
         }
         
@@ -890,7 +966,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          * 
          * @param thread the thread to introduce.
          */
-        void introduceThread(final AbstractSearchThread<N> thread) {
+        private void introduceThread(final AbstractSearchThread<N> thread) {
             lockThreadSetMutex();
             thread.putThreadToSleep(false);
             runningThreadSet.add(thread);
@@ -903,7 +979,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          * 
          * @param thread the <b>slave</b> thread to hibernate.
          */
-        void putThreadToSleep(final AbstractSearchThread<N> thread) {
+        private void putThreadToSleep(final AbstractSearchThread<N> thread) {
             thread.putThreadToSleep(true);
             lockThreadSetMutex();
             runningThreadSet.remove(thread);
@@ -914,7 +990,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         /**
          * Wakes up all the sleeping slave threads.
          */
-        void wakeupAllSleepingThreads() { 
+        private void wakeupAllSleepingThreads() { 
             lockThreadSetMutex();
             
             for (final AbstractSearchThread<N> thread : sleepingThreadSet) {
@@ -1079,6 +1155,9 @@ extends AbstractDelayedGraphPathFinder<N> {
             this.expansionJoinDurationNanos = expansionJoinDurationNanos;
         }
 
+        /**
+         * Runs this search thread.
+         */
         @Override
         public void run() {
             while (true) {
@@ -1140,9 +1219,8 @@ extends AbstractDelayedGraphPathFinder<N> {
          */
         private void processCurrentInMasterThread() {
             lock();
-            final N head = searchState.getQueueHead();
+            final N head = searchState.peekQueueHead();
             unlock();
-            
             
             searchState.wakeupAllSleepingThreads();
             
@@ -1156,7 +1234,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 mysleep(threadSleepDurationNanos);
                 
                 lock();
-                currentHead = searchState.getQueueHead();
+                currentHead = searchState.peekQueueHead();
                 unlock();
                 
                 if (currentHead != null) {
@@ -1165,24 +1243,31 @@ extends AbstractDelayedGraphPathFinder<N> {
             }
             
             if (currentHead == null) {
+                // No new nodes in the queue. Abandon search:
                 sharedSearchState.requestGlobalHalt();
             } else {
+                // Wake all slave threads working on this search direction:
                 searchState.wakeupAllSleepingThreads();
             }
         }
         
+        /**
+         * Processes the queue head node in a slave thread.
+         */
         private void processCurrentInSlaveThread() {
             if (sharedSearchState.globalHaltRequested()) {
+                // Halt requested, abandon seaarch:
                 return;
             }
         
             if (sleepRequested) {
+                // We are now sleeping:
                 mysleep(threadSleepDurationNanos);
                 return;
             }
             
             lock();
-            final N current = searchState.getQueueHead();
+            final N current = searchState.peekQueueHead();
             unlock();
             
             if (current == null) {
@@ -1194,7 +1279,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             searchState.wakeupAllSleepingThreads();
             
             lock();
-            sharedSearchState.updateSearchState(current);
+            sharedSearchState.updateTouchNode(current);
             
             if (sharedSearchState.pathIsReady()) {
                 unlock();
@@ -1211,6 +1296,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             final long startTime = System.currentTimeMillis();
             
+            // Removes the queue head node from the queue and expands it:
             expand();
             
             final long endTime = System.currentTimeMillis();
@@ -1221,35 +1307,18 @@ extends AbstractDelayedGraphPathFinder<N> {
             }
         }
         
+        /**
+         * Locks the global mutex.
+         */
         private void lock() {
             sharedSearchState.lock();
         }
         
+        /**
+         * Unlocks the global mutex.
+         */
         private void unlock() {
             sharedSearchState.unlock();
-        }
-        
-        private static <N> List<N> tracebackPath(N meetingNode,
-                                                 Map<N, N> parents1,
-                                                 Map<N, N> parents2) {
-            List<N> path = new ArrayList<>();
-            N node = meetingNode;
-            
-            while (node != null) {
-                path.add(node);
-                node = parents1.get(node);
-            }
-            
-            Collections.reverse(path);
-            
-            node = parents2.get(node);
-            
-            while (node != null) {
-                path.add(node);
-                node = parents2.get(node);
-            }
-            
-            return path;
         }
         
         /**
@@ -1263,31 +1332,35 @@ extends AbstractDelayedGraphPathFinder<N> {
             unlock();
             
             if (current == null) {
+                // Once here, nothing to do:
                 return;
             }
             
             final ExpansionThread<N> expansionThread = 
                     new ExpansionThread<>(current, nodeExpander);
             
-            expansionThread.setDaemon(true);
+            expansionThread.setDaemon(true); // Important!
             expansionThread.start();
             
             try {
                 expansionThread.join(expansionJoinDurationNanos / 1_000_000L, 
                                (int)(expansionJoinDurationNanos % 1_000_000L));
             } catch (InterruptedException ex) {
+                // Did not get the response from the node expander:
                 LOGGER.log(Level.SEVERE, "Expansion thread threw: {0}", ex);
                 return;
             }
             
             if (expansionThread.getSuccessorList().isEmpty()) {
+                // Nothing to do:
                 return;
             }
             
             lock();
-            sharedSearchState.updateSearchState(current);
+            sharedSearchState.updateTouchNode(current);
             unlock();
             
+            // Processes the successors of the current node:
             for (final N successor : expansionThread.getSuccessorList()) {
                 lock();
                 
