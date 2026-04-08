@@ -1,0 +1,72 @@
+package io.github.coderodde.graph.pathfinding.delayed.impl;
+
+import io.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
+import io.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
+import java.util.List;
+import org.junit.Test;
+
+public class ThreadPoolBidirectionalBFSPathFinderSearchBuilderTest {
+
+    private final Integer source = 1; // source
+    private final Integer target = 2; // target
+    private final AbstractNodeExpander<Integer> expander1 = expander();
+    private final AbstractNodeExpander<Integer> expander2 = expander1;
+    private final AbstractDelayedGraphPathFinder<Integer> finder = 
+            new ThreadPoolBidirectionalBFSPathFinder<>();
+    
+    @Test
+    public void testWithPathFinder() {
+        // Passes if does not throw an exception.
+        ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+            .withPathFinder(finder)
+            .withSourceNode(source)
+            .withTargetNode(target)
+            .withUndirectedGraphNodeExpander(expander1)
+            .search();
+        
+        ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+            .withPathFinder(finder)
+            .withSourceNode(source)
+            .withTargetNode(target)
+            .withForwardNodeExpander(expander1)
+            .withBackwardNodeExpander(expander2)
+            .search();
+        
+        ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+            .withPathFinder(finder)
+            .withSourceNode(source)
+            .withTargetNode(target)
+            .withUndirectedGraphNodeExpander(expander1)
+            .withSharedSearchProgressListener(null)
+            .withForwardSearchProgressListener(null)
+            .withBackwardSearchProgressListener(null)
+            .search();
+        
+        ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+            .withPathFinder(finder)
+            .withSourceNode(source)
+            .withTargetNode(target)
+            .withForwardNodeExpander(expander1)
+            .withBackwardNodeExpander(expander2)
+            .withSharedSearchProgressListener(null)
+            .withForwardSearchProgressListener(null)
+            .withBackwardSearchProgressListener(null)
+            .search();
+    }
+
+    private AbstractNodeExpander<Integer> expander() {
+        return new AbstractNodeExpander<Integer>() {
+            
+            @Override
+            public List<Integer> generateSuccessors(Integer node) 
+                    throws Exception {
+                return List.of(2, 3);
+            }
+
+            @Override
+            public boolean isValidNode(Integer node) throws Exception {
+                return true;
+            }
+        };
+    }
+}

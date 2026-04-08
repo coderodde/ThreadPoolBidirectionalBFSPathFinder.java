@@ -472,12 +472,13 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                         .end();
         
         List<DirectedGraphNode> path = 
-                ThreadPoolBidirectionalBFSPathFinderSearchBuilder.<DirectedGraphNode>
+                ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+               .<DirectedGraphNode>
                 withPathFinder(pathfinder)
                .withSourceNode(s)
                .withTargetNode(t)
-               .withForwardNodeExpander(new ForwardNodeExpander())
-               .withBackwardNodeExpander(new BackwardNodeExpander())
+               .withForwardNodeExpander (new ForwardNodeExpander())
+               .withBackwardNodeExpander(new ForwardNodeExpander())
                .search();
         
         assertEquals(4, path.size());
