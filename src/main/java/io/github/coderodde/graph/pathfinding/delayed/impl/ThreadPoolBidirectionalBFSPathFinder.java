@@ -22,23 +22,27 @@ import java.util.logging.Logger;
 
 /**
  * This class implements a parallel, bidirectional breadth-first search in order
- * to find an unweighted shortest path from a given source node to a given 
- * target node. The underlying algorithm is the bidirectional breadth-first
- * search. However, multiple threads may work on a single search direction in
- * order to speed up the computation: for each search direction (forward and 
- * backward), the algorithm maintains concurrent state, such as the frontier 
- * queue; many threads may pop the queue, expand the node and append the 
- * neighbours to that queue.
+ * to find an unweighted (not necessarily <b>shortest</b>) path from a given
+ * source node to a given target node. The underlying algorithm is the 
+ * bidirectional breadth-first search. However, multiple threads may work on a 
+ * single search direction in order to speed up the computation: for each search 
+ * direction (forward and backward), the algorithm maintains concurrent state, 
+ * such as the frontier queue; many threads may pop the queue, expand the node 
+ * and append the neighbours to that queue.
+ * 
+ * Basically, this concurrent algoirthm solves the <i>earliest path problem</i>.
+ * The algorithm should benefit from multithreading in case the input graph is
+ * <i>delayed</i>, i.e., generating successors of a node takes substantial time
+ * such as, for example, half a second.
  * 
  * @param <N> the actual graph node type.
- * 
- * @author Rodion "rodde" Efremov
- * @version 1.1.0 (Dec 2, 2025)
- * @since 1.0.0
  */
 public final class ThreadPoolBidirectionalBFSPathFinder<N> 
 extends AbstractDelayedGraphPathFinder<N> {
     
+    /**
+     * 
+     */
     private static final Map<ThreadPoolBidirectionalBFSPathFinder,
                              SharedSearchState> INSTANCE_MAP = 
                             new ConcurrentHashMap<>();
@@ -158,15 +162,17 @@ extends AbstractDelayedGraphPathFinder<N> {
      */
     private volatile boolean wasHalted = false;
     
+    private final SharedSearchProgressListener<N> sharedSearchProgressListener;
+    
     /**
      * The forward search progress logger.
      */
-    private final DirectionProgressListener forwardProgressLogger;
+    private final DirectionProgressListener<N> forwardProgressLogger;
     
     /**
      * The backward search progress logger.
      */
-    private final DirectionProgressListener backwardProgressLogger;
+    private final DirectionProgressListener<N> backwardProgressLogger;
     
     /**
      * The logging facility used to log abnormal activity.
@@ -237,6 +243,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 Math.max(lockWaitDurationNanos,
                          MINIMUM_LOCK_WAIT_NANOS);
         
+        this.sharedSearchProgressListener = sharedProgressListener;
         this.forwardProgressLogger  = forwardProgressListener;
         this.backwardProgressLogger = backwardProgressListener;
     }
@@ -298,11 +305,15 @@ extends AbstractDelayedGraphPathFinder<N> {
         this(DEFAULT_NUMBER_OF_THREADS);
     }
     
-    public DirectionProgressListener getForwardProgressLogger() {
+    public SharedSearchProgressListener getSharedSearchProgressListener() {
+        return sharedSearchProgressListener;
+    }
+    
+    public DirectionProgressListener getForwardProgressListener() {
         return forwardProgressLogger;
     }
     
-    public DirectionProgressListener getBackwardProgressLogger() {
+    public DirectionProgressListener getBackwardProgressListener() {
         return backwardProgressLogger;
     }
     
@@ -860,7 +871,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             final N node, 
             final N predecessor) {
             
-            if (distances.get(node) > distances.get(predecessor) + 1) {
+            if (distances.get(node) > distances.get(predecessor) + 1) { 
                 distances.put(node,   distances.get(predecessor) + 1);
                 parents.put(node, predecessor);
             }
