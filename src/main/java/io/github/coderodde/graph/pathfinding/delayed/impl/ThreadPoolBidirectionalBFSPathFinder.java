@@ -1351,7 +1351,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 return;
             }
             
-            if (expansionThread.getSuccessorList().isEmpty()) {
+            if (expansionThread.getSuccessorList() == null) {
                 // Nothing to do:
                 return;
             }
