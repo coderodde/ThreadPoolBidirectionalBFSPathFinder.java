@@ -3,6 +3,7 @@ package io.github.coderodde.graph.pathfinding.delayed.impl;
 import io.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
 import io.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import io.github.coderodde.graph.pathfinding.delayed.DirectionProgressListener;
+import io.github.coderodde.graph.pathfinding.delayed.SharedProgressListener;
 import java.util.List;
 import java.util.Objects;
 
@@ -14,9 +15,9 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         N target;
         AbstractNodeExpander<N> forwardSearchExpander;
         AbstractNodeExpander<N> backwardSearchExpander;
-        DirectionProgressListener<N> forwardSearchProgressLogger;
-        DirectionProgressListener<N> backwardSearchProgressLogger;
-        DirectionProgressListener<N> sharedSearchProgressLogger;
+        SharedProgressListener<N> sharedSearchProgressListener;
+        DirectionProgressListener<N> forwardSearchProgressListener;
+        DirectionProgressListener<N> backwardSearchProgressListener;
     }
     
     public static <N> SourceNodeSelector<N> 
@@ -107,7 +108,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         public BackwardSearchProgressLoggerSelector<N> 
         withForwardSearchProgressLogger(
                 final DirectionProgressListener<N> forwardSearchProgressLogger) {
-            settings.forwardSearchProgressLogger = forwardSearchProgressLogger;
+            settings.forwardSearchProgressListener = forwardSearchProgressLogger;
             return new BackwardSearchProgressLoggerSelector<>(settings);
         }
     }
@@ -132,7 +133,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         public BackwardSearchProgressLoggerSelector<N> 
         withForwardSearchProgressLogger(
                 final DirectionProgressListener<N> forwardSearchProgressLogger) {
-            settings.forwardSearchProgressLogger = forwardSearchProgressLogger;
+            settings.forwardSearchProgressListener = forwardSearchProgressLogger;
             return new BackwardSearchProgressLoggerSelector<>(settings);
         }
     }
@@ -147,7 +148,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         public BackwardSearchProgressLoggerSelector<N> 
         withForwardSearchProgressLogger(
                 final DirectionProgressListener<N> forwardSearchProgressLogger) {
-            settings.forwardSearchProgressLogger = forwardSearchProgressLogger;
+            settings.forwardSearchProgressListener = forwardSearchProgressLogger;
             return new BackwardSearchProgressLoggerSelector<>(settings);
         }
     }
@@ -162,7 +163,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         public SharedSearchProgressLoggerSelector<N> 
         withBackwardSearchProgressLogger(
                 final DirectionProgressListener<N> backwardSearchProgressLogger) {
-            settings.backwardSearchProgressLogger = 
+            settings.backwardSearchProgressListener = 
                      backwardSearchProgressLogger;
             
             return new SharedSearchProgressLoggerSelector<>(settings);
@@ -177,9 +178,9 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         }
         
         public Search<N> withSharedSearchProgressLogger(
-                final DirectionProgressListener<N> sharedSearchProgressLogger) {
+                final SharedProgressListener<N> sharedSearchProgressLogger) {
             
-            this.settings.sharedSearchProgressLogger = 
+            this.settings.sharedSearchProgressListener = 
                           sharedSearchProgressLogger;
             
             return new Search<>(settings);
@@ -198,9 +199,9 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
                                           settings.target,
                                           settings.forwardSearchExpander,
                                           settings.backwardSearchExpander,
-                                          settings.forwardSearchProgressLogger, 
-                                          settings.backwardSearchProgressLogger, 
-                                          settings.sharedSearchProgressLogger);
+                                          settings.sharedSearchProgressListener,
+                                          settings.forwardSearchProgressListener, 
+                                          settings.backwardSearchProgressListener); 
         }
     }
     
@@ -212,19 +213,20 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         }
         
         public List<N> search() {
-            return settings.finder.search(settings.source,
-                                          settings.target,
-                                          settings.forwardSearchExpander,
-                                          settings.backwardSearchExpander,
-                                          settings.forwardSearchProgressLogger, 
-                                          settings.backwardSearchProgressLogger, 
-                                          settings.sharedSearchProgressLogger);
+            return settings.finder.search(
+                    settings.source,
+                    settings.target,
+                    settings.forwardSearchExpander,
+                    settings.backwardSearchExpander,
+                    settings.sharedSearchProgressListener,
+                    settings.forwardSearchProgressListener, 
+                    settings.backwardSearchProgressListener);
         }
         
         public BackwardSearchProgressLoggerSelector<N> 
         withForwardSearchProgressLogger(
                 final DirectionProgressListener<N> forwardSearchProgressLogger) {
-            settings.forwardSearchProgressLogger = forwardSearchProgressLogger;
+            settings.forwardSearchProgressListener = forwardSearchProgressLogger;
             return new BackwardSearchProgressLoggerSelector<>(settings);
         }
     }

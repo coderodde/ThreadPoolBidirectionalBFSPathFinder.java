@@ -408,30 +408,23 @@ extends AbstractDelayedGraphPathFinder<N> {
 
         // Create the state object shared by both the search direction:
         final SharedSearchState<N> sharedSearchState = 
-                new SharedSearchState<>(source, 
-                                        target, 
-                                        sharedSearchProgressListener,
-                                        lockWaitDurationNanos);
+                new SharedSearchState<>();
         
         INSTANCE_MAP.put(this, sharedSearchState);
 
         // Create the state obj6/ect shared by all the threads working on forward
         // search direction:
-        final SearchState<N> forwardSearchState = 
-                new SearchState<>(source, 
-                                  sharedSearchState);
+        final SearchState<N> forwardSearchState = new SearchState<>(source);
 
         // Create the state object shared by all the threads working on backward
         // search direction:
-        final SearchState<N> backwardSearchState = 
-                new SearchState<>(target,
-                                  sharedSearchState);
+        final SearchState<N> backwardSearchState = new SearchState<>(target);
         
         sharedSearchState.setForwardSearchState(forwardSearchState);
         sharedSearchState.setBackwardSearchState(backwardSearchState);
         
-        forwardSearchState.setOppositeSearchState(backwardSearchState);
-        backwardSearchState.setOppositeSearchState(forwardSearchState);
+//        forwardSearchState.setOppositeSearchState(backwardSearchState);
+//        backwardSearchState.setOppositeSearchState(forwardSearchState);
         
         // The array holding all forward slave threads and the forward master
         // thread:
@@ -627,16 +620,6 @@ extends AbstractDelayedGraphPathFinder<N> {
      */
     private static final class SharedSearchState<N> {
         
-//        /**
-//         * The source node.
-//         */
-//        private final N source;
-//
-//        /**
-//         * The target node. 
-//         */
-//        private final N target;
-        
         /**
          * The global flag indicating that the search must halt immediately and
          * prematurely.
@@ -660,43 +643,42 @@ extends AbstractDelayedGraphPathFinder<N> {
         private final Semaphore mutex = new Semaphore(1, true);
         
         /**
+         * Caches the best known length from the source node to the target node.
+         */
+        private volatile int bestPathLengthSoFar = Integer.MAX_VALUE;
+        
+        /**
          * The best search frontier touch node so far.
          */
         private volatile N touchNode;
-//
-//        /**
-//         * The progress logger for reporting the progress.
-//         */
-//        private final SharedProgressListener<N> sharedProgressListener;
-//        
-//        /**
-//         * The duration in nanoseconds for waiting to the lock.
-//         */
-//        private final long lockWaitDurationNanos;
         
         /**
          * Stores the shortest path. Empty, if none found.
          */
         private final List<N> shortestPath = new ArrayList<>();
-
+        
         /**
-         * Constructs a shared state information object for the search.
+         * Returns {@code true} if and only if the earliest path is found.
          * 
-         * @param source               the source node.
-         * @param target               the target node.
-         * @param sharedProgressListener the progress listener listening the 
-         *                               overall progress of the path finder.
+         * @return a flag indicating that the earliest path is found.
          */
-        SharedSearchState(
-                final N source,
-                final N target, 
-                final SharedProgressListener<N> sharedProgressListener,
-                final long lockWaitDuration) {
+        boolean pathIsReady() {
+            if (touchNode == null) {
+                return false;
+            }
             
-//            this.source = source;
-//            this.target = target;
-//            this.sharedProgressListener = sharedProgressListener;
-//            this.lockWaitDurationNanos = lockWaitDuration;
+            final N forwardSearchHead  = forwardSearchState.getQueueHead();
+            final N backwardSearchHead = backwardSearchState.getQueueHead();
+            
+            if (forwardSearchHead == null || backwardSearchHead == null) {
+                return false;
+            }
+            
+            final int distance =
+                    forwardSearchState .getDistanceOf(forwardSearchHead) +
+                    backwardSearchState.getDistanceOf(backwardSearchHead);
+            
+            return distance > bestPathLengthSoFar;
         }
         
         void requestGlobalHalt() {
@@ -1023,7 +1005,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         /**
          * The progress logger.
          */
-        protected final DirectionProgressListener<N> searchProgressLogger;
+        protected final DirectionProgressListener<N> searchProgressListener;
         
         /**
          * The number of milliseconds for waiting for the node expansion.
@@ -1082,7 +1064,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             this.nodeExpander          = nodeExpander;
             this.searchState           = searchState;
             this.sharedSearchState     = sharedSearchState;
-            this.searchProgressLogger  = searchProgressLogger;
+            this.searchProgressListener  = searchProgressLogger;
             this.expansionJoinDurationNanos = expansionJoinDurationNanos;
         }
 
@@ -1201,10 +1183,9 @@ extends AbstractDelayedGraphPathFinder<N> {
             searchState.wakeupAllSleepingThreads();
             
             lock();
-            sharedSearchState.up
+            sharedSearchState.updateSearchState(current);
             
-            // NOTE
-            if (sharedSearchState.pathIsOptimal()) {
+            if (sharedSearchState.pathIsReady()) {
                 unlock();
                 sharedSearchState.requestGlobalHalt();
                 // Wake all the search threads so that the can read the halt 
@@ -1219,13 +1200,13 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             final long startTime = System.currentTimeMillis();
             
-            expand(current);
+            expand();
             
             final long endTime = System.currentTimeMillis();
             final long expansionDuration = endTime - startTime;
             
-            if (searchProgressLogger != null) {
-                searchProgressLogger.onExpansion(current, expansionDuration);
+            if (searchProgressListener != null) {
+                searchProgressListener.onExpansion(current, expansionDuration);
             }
         }
         
@@ -1235,132 +1216,6 @@ extends AbstractDelayedGraphPathFinder<N> {
         
         private void unlock() {
             sharedSearchState.unlock();
-        }
-        
-        private void processCurrentInSlaveThread() {
-            if (sharedSearchState.globalHaltRequested()) {
-                return;
-            }
-            
-            if (sleepRequested) {
-                mysleep(threadSleepDurationNanos);
-                return;
-            }
-            
-            int frontierIndex = searchState.frontierQueues.size() - 2;
-            int nextFrontierIndex = frontierIndex + 1;
-            
-            Deque<N> topFrontier = 
-                searchState.frontierQueues.get(frontierIndex);
-            
-            Deque<N> nextFrontier = 
-                searchState.frontierQueues.get(nextFrontierIndex);
-            
-            Set<N> nextFrontierSet = 
-                searchState.frontierSets.get(nextFrontierIndex);
-            
-            if (!topFrontier.isEmpty()) {
-                N current = topFrontier.peekFirst();
-                
-                if (current == null) {
-                    // Once here, nothing to do. Go to sleep:
-                    searchState.putThreadToSleep(this);
-                    return;
-                }
-                
-                topFrontier.removeFirst(); // Remove the current node from the
-                                           // queue.
-                
-                if (searchState.visited.contains(current)) {
-                    // Once here, we have found a back link to a node which is 
-                    // already expanded, exit:
-                    return;
-                }
-                
-                // Mark 'current' as visited:
-                searchState.visited.add(current);
-                
-                ExpansionThread<N> expansionThread = 
-                        new ExpansionThread<>(current, nodeExpander);
-                
-                expansionThread.setDaemon(true);
-                expansionThread.start();
-                
-                long ta = System.currentTimeMillis();
-                
-                try {
-                    expansionThread.join(
-                            expansionJoinDurationNanos / 1_000_000L, 
-                      (int)(expansionJoinDurationNanos % 1_000_000L));
-                } catch (InterruptedException ex) {
-                    LOGGER.log(Level.SEVERE, 
-                               "Expansion thread interrupted: {0}",
-                               ex);
-                    return;
-                }
-                
-                long tb = System.currentTimeMillis();
-                long expansionDuration = tb - ta;
-                
-                if (searchProgressLogger != null) {
-                    searchProgressLogger.onExpansion(current, 
-                                                     expansionDuration);
-                }
-                
-                searchState.frontierSets.get(frontierIndex).add(current);
-                
-                for (N successor : expansionThread.successorList) {
-                    if (searchState.visited.contains(successor)) {
-                        continue;
-                    }
-                    
-                    nextFrontier.addLast(successor);
-                    nextFrontierSet.add(successor);
-                    searchState.parents.put(successor, current);
-                }
-            } else {
-                // Here, topFrontier is empty:
-                if (nextFrontier.isEmpty()) {
-                    // Once here, we have a dead end:
-                    sharedSearchState.requestGlobalHalt();
-                    return;
-                }
-                
-                Set<N> set1 = nextFrontierSet;
-                Set<N> set2 = searchState.oppositeSearchState.visited;
-                
-                N meetingPoint = intersect(set1, set2);
-                
-                if (meetingPoint != null) {
-                    sharedSearchState.requestGlobalHalt();
-                    
-                    sharedSearchState.shortestPath.addAll(
-                        tracebackPath(meetingPoint,
-                                      searchState.parents,
-                                      searchState.oppositeSearchState.parents));
-                }
-                
-                searchState.frontierQueues.addLast(new SynchronizedDeque<>());
-                searchState.frontierSets.addLast(ConcurrentHashMap.newKeySet());
-            }
-        }
-        
-        private static <N> N intersect(Set<N> set1, Set<N> set2) {
-            if (set1.size() < set2.size()) {
-                for (N node : set1) {
-                    if (set2.contains(node)) {
-                        return node;
-                    }
-                }
-            } else {
-                for (N node : set2) {
-                    if (set1.contains(node)) {
-                        return node;
-                    }
-                }
-            }
-            
-            return null;
         }
         
         private static <N> List<N> tracebackPath(N meetingNode,
@@ -1386,179 +1241,59 @@ extends AbstractDelayedGraphPathFinder<N> {
             return path;
         }
         
-        private void processCurrentInSlaveThreadOld() {
-            if (sharedSearchState.globalHaltRequested()) {
-                return;
-            }
-            
-            if (sleepRequested) {
-                mysleep(threadSleepDurationNanos);
-                return;
-            }
-            
-            lock();
-            
-            final int currentFrontierDepth = searchState.currentFrontierDepth;
-            
-            Deque<N> currentFrontier = 
-                    searchState.frontierQueues.get(currentFrontierDepth);
-            
-            if (currentFrontier.isEmpty()) {
-                final N touchNode = getTouchNode();
-                
-                if (touchNode != null) {
-                    sharedSearchState.touchNode = touchNode;
-                    sharedSearchState.loadShortestPath();
-                    sharedSearchState.unlock();
-                    sharedSearchState.requestGlobalHalt();
-                    return;
-                } else {
-                    // Grab the next, deeper frontier queue:
-                    currentFrontier = searchState.frontierQueues.getLast();
-                    
-                    // Make room for the next frontier queue:
-                    searchState.currentFrontierDepth++;
-                    searchState.frontierQueues.add(new ArrayDeque<>());
-                    searchState.frontierSets  .add(new HashSet<>());
-                }
-            }
-            
-            final N current = currentFrontier.peekFirst();
-            
-            if (current == null) {
-                // Nothing to do, go to sleep.
-                searchState.putThreadToSleep(this);
-                unlock();
-                return;
-            }
-            
-            searchState.wakeupAllSleepingThreads();
-            
-            numberOfExpandedNodes++;
-            
-            final long startTime = System.currentTimeMillis();
-            expand();
-            final long endTime = System.currentTimeMillis();
-            final long expansionDuration = endTime - startTime;
-            
-            if (searchProgressLogger != null) {
-                searchProgressLogger.onExpansion(current,
-                                                 expansionDuration);
-            }
-            
-            unlock();
-        }
-        
-        private void lock() {
-            sharedSearchState.lock();
-        }
-        
-        private void unlock() {
-            sharedSearchState.unlock();
-        }
-        
         /**
          * Expands the current node.
          * 
          * @param current the node of which to generate the successor nodes.
          */
         private void expand() {
-            
-            final int currentFrontierDepth = 
-                    this.searchState.currentFrontierDepth;
-            
-            final Deque<N> currentFrontierQueue = 
-                    this.searchState.frontierQueues.get(currentFrontierDepth);
-            
-            final Set<N> currentFrontierSet = 
-                    this.searchState.frontierSets.get(currentFrontierDepth);
-            
-            N current = currentFrontierQueue.peekFirst();
+            lock();
+            final N current = searchState.removeQueueHead();
+            unlock();
             
             if (current == null) {
-                if (searchState.frontierQueues
-                               .get(currentFrontierDepth + 1)
-                               .isEmpty()) {
-                    // Here, no source/target path at all. Halt and return an 
-                    // empty path:
-                    sharedSearchState.requestGlobalHalt();
-                    return;
-                }
-                
-                // Here, there is more graph to explore, but we need to check
-                // for presence of a shortest path:
-                sharedSearchState.touchNode = getTouchNode();
-                
-                if (sharedSearchState.touchNode != null) {
-                    sharedSearchState.getShortestPath();
-                    sharedSearchState.requestGlobalHalt();
-                    return;
-                }
-                
-                // No path yet, but we have more nodes to explore. Advance to 
-                // the next frontier level:
-                current = this.searchState
-                              .frontierQueues
-                              .get(currentFrontierDepth)
-                              .getFirst();
-                
-                this.searchState.currentFrontierDepth++;
-                this.searchState.frontierQueues.add(new ArrayDeque<>());
-                this.searchState.frontierSets  .add(new HashSet<>());
+                return;
             }
             
-            // Discharge the head node ('current') in the current depth queue:
-            currentFrontierQueue.removeFirst();
-            // Memorize 'current' at the current search level:
-            currentFrontierSet.add(current);
-            
-            final ExpansionThread<N> expansionThread =
+            final ExpansionThread<N> expansionThread = 
                     new ExpansionThread<>(current, nodeExpander);
             
             expansionThread.setDaemon(true);
-            
             expansionThread.start();
             
             try {
-                expansionThread.join(
-                        expansionJoinDurationNanos / 1_000_000L, 
-                        (int)(expansionJoinDurationNanos % 1_000_000L));
+                expansionThread.join(expansionJoinDurationNanos / 1_000_000L, 
+                               (int)(expansionJoinDurationNanos % 1_000_000L));
             } catch (InterruptedException ex) {
+                LOGGER.log(Level.SEVERE, "Expansion thread threw: {0}", ex);
                 return;
             }
             
-            if (expansionThread.successorList.isEmpty()) {
+            if (expansionThread.getSuccessorList().isEmpty()) {
                 return;
             }
             
-            final Set<N> visited           = searchState.visited;
-            final Map<N, Integer> distance = searchState.distances;
-            final Map<N, N> parents        = searchState.parents;
-            final int nextLevelIndex       = currentFrontierDepth + 1;
-            final Deque<N> nextFrontier    = searchState.frontierQueues
-                                                        .get(nextLevelIndex);
-            
-            final Set<N> nextFrontierSet   = searchState.frontierSets
-                                                        .get(nextLevelIndex);
-            
-            visited.add(current);
+            lock();
+            sharedSearchState.updateSearchState(current);
+            unlock();
             
             for (final N successor : expansionThread.getSuccessorList()) {
-                if (visited.contains(successor)) {
-                    continue;
+                lock();
+                
+                if (searchState.trySetNodeInfo(successor, current)) {
+                    if (searchProgressListener != null) {
+                        searchProgressListener.onNeighborGeneration(successor);
+                    }
+                } else {
+                    if (searchProgressListener != null) {
+                        searchProgressListener.onNeighborImprovement(successor);
+                    }
+                    
+                    searchState.tryUpdateIfImprovementPossible(successor, 
+                                                               current);
                 }
                 
-                // TODO: remove this?
-                if (distance.containsKey(successor) &&
-                    distance.get(successor) == currentFrontierDepth) {
-                    continue;
-                }
-                
-                distance.put(successor, distance.get(current) + 1);
-                parents.put(successor, current);
-                
-                nextFrontier.add(successor);
-                nextFrontierSet.add(successor);
+                unlock();
             }
         }
     }
@@ -1662,47 +1397,6 @@ extends AbstractDelayedGraphPathFinder<N> {
                  threadSleepTrials,
                  expansionJoinDuration,
                  finder);
-        }
-    }
-    
-    private final class ConfigurationInfo {
-        
-        private final int numberOfThreads =
-                ThreadPoolBidirectionalBFSPathFinder.this.numberOfForwardThreads;
-        
-        private final int masterThreadTrials = 
-                ThreadPoolBidirectionalBFSPathFinder.this.masterThreadTrials;
-        
-        private final long masterThreadSleepDuration = 
-                ThreadPoolBidirectionalBFSPathFinder
-                .this
-                .masterThreadSleepDurationNanos;
-        
-        private final long slaveThreadSleepDuration = 
-                ThreadPoolBidirectionalBFSPathFinder
-                .this
-                .slaveThreadSleepDurationNanos;
-        
-        private final long expansionJoinDurationNanos =
-                ThreadPoolBidirectionalBFSPathFinder
-                .this
-                .expansionJoinDurationNanos;
-        
-        private final long lockWaitDurationNanos = 
-                ThreadPoolBidirectionalBFSPathFinder.this.lockWaitDurationNanos;
-        
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            
-            sb.append(String.format("numberOfThreads:            %,d.\n", numberOfThreads));
-            sb.append(String.format("masterThreadTrials:         %,d.\n", masterThreadTrials));
-            sb.append(String.format("masterThreadSleepDuration:  %,d.\n", masterThreadSleepDuration));
-            sb.append(String.format("slaveThreadSleepDuration:   %,d.\n", slaveThreadSleepDuration));
-            sb.append(String.format("expansionJoinDurationNanos: %,d.\n", expansionJoinDurationNanos));
-            sb.append(String.format("lockWaitDurationNanos:      %,d.\n", lockWaitDurationNanos));
-            
-            return sb.toString();
         }
     }
     

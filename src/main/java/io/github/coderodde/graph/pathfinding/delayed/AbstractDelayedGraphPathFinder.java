@@ -66,7 +66,7 @@ public abstract class AbstractDelayedGraphPathFinder<N> {
      *                                     child nodes.
      * @param backwardSearchNodeExpander   the expander generating all the 
      *                                     parent nodes.                           
-     * @param sharedSearchProgressLogger   the shared progress listener.
+     * @param sharedSearchProgressListener   the shared progress listener.
      * @param forwardSearchProgressListener  the forward search listener.
      * @param backwardSearchProgressListener the backward search listener.
      * @return the shortest path as a list of nodes, or an empty list if the 
@@ -77,7 +77,7 @@ public abstract class AbstractDelayedGraphPathFinder<N> {
                final N target,
                final AbstractNodeExpander<N> forwardSearchNodeExpander,
                final AbstractNodeExpander<N> backwardSearchNodeExpander,
-               final SharedProgressListener<N> sharedSearchProgressLogger,
+               final SharedProgressListener<N> sharedSearchProgressListener,
                final DirectionProgressListener<N> forwardSearchProgressListener,
                final DirectionProgressListener<N>
                    backwardSearchProgressListener);
