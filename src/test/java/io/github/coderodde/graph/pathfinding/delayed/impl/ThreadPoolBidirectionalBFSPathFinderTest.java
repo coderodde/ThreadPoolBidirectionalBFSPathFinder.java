@@ -25,8 +25,8 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     private static final int MAXIMUM_DEGREE = 6;
     private static final int MINIMUM_DELAY = 3;
     private static final int MAXIMUM_DELAY = 40;
-    private static final int REQUESTED_NUMBER_OF_THREADS_FORWARD  = 1;
-    private static final int REQUESTED_NUMBER_OF_THREADS_BACKWARD = 1;
+    private static final int REQUESTED_NUMBER_OF_THREADS_FORWARD  = 16;
+    private static final int REQUESTED_NUMBER_OF_THREADS_BACKWARD = 16;
     private static final int MASTER_THREAD_SLEEP_DURATION_MILLIS = 20;
     private static final int SLAVE_THREAD_SLEEP_DURATION_MILLIS = 10;
     private static final int MASTER_THREAD_TRIALS = 30;
@@ -91,6 +91,40 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                 disconnectedGraphPair.nondelayedGraph;
         
         this.failingNodeGraph = directedGraphBuilder.getFailingGraph();
+    }
+    
+    @Test
+    public void isNotShortestPathAlgo() {
+        final DirectedGraphNode s = new DirectedGraphNode(0, true, 500);
+        final DirectedGraphNode a = new DirectedGraphNode(1, true, 5);
+        final DirectedGraphNode b = new DirectedGraphNode(2, true, 15);
+        final DirectedGraphNode c = new DirectedGraphNode(3, true, 10);
+        final DirectedGraphNode d = new DirectedGraphNode(4, true, 1000);
+        final DirectedGraphNode t = new DirectedGraphNode(5, true, 3);
+        
+        s.addChild(a);
+        a.addChild(b);
+        b.addChild(c);
+        c.addChild(t);
+        
+        s.addChild(d);
+        d.addChild(t);
+        
+        List<DirectedGraphNode> path = 
+                testPathFinder.search(s, 
+                                      t,
+                                      new ForwardNodeExpander(), 
+                                      new BackwardNodeExpander(), 
+                                      null,
+                                      null, 
+                                      null);
+    
+        assertEquals(5, path.size());
+        assertEquals(s, path.get(0));
+        assertEquals(a, path.get(1));
+        assertEquals(b, path.get(2));
+        assertEquals(c, path.get(3));
+        assertEquals(t, path.get(4));
     }
     
     @Test
