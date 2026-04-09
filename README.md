@@ -27,43 +27,42 @@ In order to build the pathfinding invocation, there are four options available:
 ```java
 List<DirectedGraphNode> path;
 
-// Search in undirected graph without progress logging:
-path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder.
-                <DirectedGraphNode>withPathFinder(pathfinder)
-                .withSourceNode(source)
-                .withTargetNode(target)
-                .withUndirectedGraphNodeExpander(forwardNodeExpander)
-                .search();
+// Search in an undirected graph without progress listeners:
+path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+    .withPathFinder(finder)
+    .withSourceNode(source)
+    .withTargetNode(t)
+    .withUndirectedGraphNodeExpander(expander1)
+    .search();
 
-// Search in undirected graph with progress logging:
-path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder.
-                <DirectedGraphNode>withPathFinder(pathfinder)
-                .withSourceNode(source)
-                .withTargetNode(target)
-                .withUndirectedGraphNodeExpander(forwardNodeExpander)
-                .withForwardSearchProgressLogger(null)
-                .withBackwardSearchProgressLogger(null)
-                .withSharedSearchProgressLogger(null)
-                .search();
+// Search in a directed graph without progress listeners:
+path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+    .withPathFinder(finder)
+    .withSourceNode(source)
+    .withTargetNode(t)
+    .withForwardNodeExpander(expander1)
+    .withBackwardNodeExpander(expander2)
+    .search();
 
-// Search in directed graph without progress logging:
-path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder.
-                <DirectedGraphNode>withPathFinder(pathfinder)
-                .withSourceNode(source)
-                .withTargetNode(target)
-                .withForwardNodeExpander(forwardNodeExpander)
-                .withBackwardNodeExpander(backwardNodeExpander)
-                .search();
+// Search in an undirected graph with progress listeners:
+path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+    .withPathFinder(finder)
+    .withSourceNode(source)
+    .withTargetNode(t)
+    .withUndirectedGraphNodeExpander(expander1)
+    .withSharedSearchProgressListener(null)
+    .withForwardSearchProgressListener(null)
+    .withBackwardSearchProgressListener(null)
+    .search();
 
-// Search in directed graph with progress logging:
-path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder.
-                <DirectedGraphNode>withPathFinder(pathfinder)
-                .withSourceNode(source)
-                .withTargetNode(target)
-                .withForwardNodeExpander(forwardNodeExpander)
-                .withBackwardNodeExpander(backwardNodeExpander)
-                .withForwardSearchProgressLogger(null)
-                .withBackwardSearchProgressLogger(null)
-                .withSharedSearchProgressLogger(null)
-                .search();
-```
+// Search in a ddirected graph with progress listeners:
+path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+    .withPathFinder(finder)
+    .withSourceNode(source)
+    .withTargetNode(t)
+    .withForwardNodeExpander(expander1)
+    .withBackwardNodeExpander(expander2)
+    .withSharedSearchProgressListener(null)
+    .withForwardSearchProgressListener(null)
+    .withBackwardSearchProgressListener(null)
+    .search();```
