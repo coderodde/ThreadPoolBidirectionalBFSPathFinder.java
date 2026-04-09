@@ -65,4 +65,5 @@ path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder
     .withSharedSearchProgressListener(null)
     .withForwardSearchProgressListener(null)
     .withBackwardSearchProgressListener(null)
-    .search();```
+    .search();
+```
