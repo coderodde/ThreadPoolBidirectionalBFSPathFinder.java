@@ -55,7 +55,7 @@ path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder
     .withBackwardSearchProgressListener(null)
     .search();
 
-// Search in a ddirected graph with progress listeners:
+// Search in a directed graph with progress listeners:
 path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder
     .withPathFinder(finder)
     .withSourceNode(source)
