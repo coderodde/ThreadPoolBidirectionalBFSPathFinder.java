@@ -980,8 +980,8 @@ extends AbstractDelayedGraphPathFinder<N> {
          * @param thread the <b>slave</b> thread to hibernate.
          */
         private void putThreadToSleep(final AbstractSearchThread<N> thread) {
-            thread.putThreadToSleep(true);
             lockThreadSetMutex();
+            thread.putThreadToSleep(true);
             runningThreadSet.remove(thread);
             sleepingThreadSet.add(thread);
             unlockThreadSetMutex();
@@ -1222,8 +1222,6 @@ extends AbstractDelayedGraphPathFinder<N> {
             final N head = searchState.peekQueueHead();
             unlock();
             
-            searchState.wakeupAllSleepingThreads();
-            
             if (head != null) {
                 return;
             }
@@ -1255,17 +1253,6 @@ extends AbstractDelayedGraphPathFinder<N> {
          * Processes the queue head node in a slave thread.
          */
         private void processCurrentInSlaveThread() {
-            if (sharedSearchState.globalHaltRequested()) {
-                // Halt requested, abandon seaarch:
-                return;
-            }
-        
-            if (sleepRequested) {
-                // We are now sleeping:
-                mysleep(threadSleepDurationNanos);
-                return;
-            }
-            
             lock();
             final N current = searchState.peekQueueHead();
             unlock();
@@ -1275,8 +1262,6 @@ extends AbstractDelayedGraphPathFinder<N> {
                 searchState.putThreadToSleep(this);
                 return;
             }
-            
-            searchState.wakeupAllSleepingThreads();
             
             lock();
             sharedSearchState.updateTouchNode(current);

@@ -20,7 +20,9 @@ public final class DirectedGraphNode {
      * @param id the node ID. 
      */
     public DirectedGraphNode(final int id) {
-        this(id, false, Integer.MAX_VALUE);
+        this.id = id;
+        this.isDelayed = false;
+        this.delayMilliseconds = 0;
     }
     
     /**
@@ -29,14 +31,12 @@ public final class DirectedGraphNode {
      * milliseconds before returning the list of parents/children.
      * 
      * @param id                the node ID.
-     * @param isDelayed         the flag specifying whether the node shall wait.
      * @param delayMilliseconds the sleep delay in milliseconds. 
      */
     public DirectedGraphNode(final int id, 
-                             final boolean isDelayed,
                              final int delayMilliseconds) {
         this.id = id;
-        this.isDelayed = isDelayed;
+        this.isDelayed = true;
         this.delayMilliseconds = delayMilliseconds;
     }
     

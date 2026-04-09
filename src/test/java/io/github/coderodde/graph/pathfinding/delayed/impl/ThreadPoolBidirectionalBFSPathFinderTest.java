@@ -98,12 +98,12 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     
     @Test
     public void isNotShortestPathAlgo() {
-        final DirectedGraphNode s = new DirectedGraphNode(0, true, 500);
-        final DirectedGraphNode a = new DirectedGraphNode(1, true, 5);
-        final DirectedGraphNode b = new DirectedGraphNode(2, true, 15);
-        final DirectedGraphNode c = new DirectedGraphNode(3, true, 10);
-        final DirectedGraphNode d = new DirectedGraphNode(4, true, 1000);
-        final DirectedGraphNode t = new DirectedGraphNode(5, true, 3);
+        final DirectedGraphNode s = new DirectedGraphNode(0, 500);
+        final DirectedGraphNode a = new DirectedGraphNode(1, 5);
+        final DirectedGraphNode b = new DirectedGraphNode(2, 15);
+        final DirectedGraphNode c = new DirectedGraphNode(3, 10);
+        final DirectedGraphNode d = new DirectedGraphNode(4, 1000);
+        final DirectedGraphNode t = new DirectedGraphNode(5, 3);
         
         s.addChild(a);
         a.addChild(b);
@@ -282,13 +282,13 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     
     @Test
     public void omitsFaultyLinks() {
-        final DirectedGraphNode a  = new DirectedGraphNode(1, true, 100);
-        final DirectedGraphNode b1 = new DirectedGraphNode(2, true, 100);
-        final DirectedGraphNode b2 = new DirectedGraphNode(3, true, 100);
-        final DirectedGraphNode b3 = new DirectedGraphNode(4, true, 100);
-        final DirectedGraphNode c1 = new DirectedGraphNode(5, true, 10_000);
-        final DirectedGraphNode c2 = new DirectedGraphNode(6, true, 10_000);
-        final DirectedGraphNode d  = new DirectedGraphNode(7, true, 100);
+        final DirectedGraphNode a  = new DirectedGraphNode(1, 100);
+        final DirectedGraphNode b1 = new DirectedGraphNode(2, 100);
+        final DirectedGraphNode b2 = new DirectedGraphNode(3, 100);
+        final DirectedGraphNode b3 = new DirectedGraphNode(4, 100);
+        final DirectedGraphNode c1 = new DirectedGraphNode(5, 10_000);
+        final DirectedGraphNode c2 = new DirectedGraphNode(6, 10_000);
+        final DirectedGraphNode d  = new DirectedGraphNode(7, 100);
         
         a.addChild(b1);
         b1.addChild(b2);
@@ -322,8 +322,8 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     
     @Test
     public void halt() {
-        final DirectedGraphNode source = new DirectedGraphNode(1, true, 10_000);
-        final DirectedGraphNode target = new DirectedGraphNode(2, true, 10_000);
+        final DirectedGraphNode source = new DirectedGraphNode(1, 10_000);
+        final DirectedGraphNode target = new DirectedGraphNode(2, 10_000);
         
         source.addChild(target);
         

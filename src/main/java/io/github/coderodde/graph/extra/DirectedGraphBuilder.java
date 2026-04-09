@@ -31,7 +31,7 @@ public final class DirectedGraphBuilder {
         List<DirectedGraphNode> graph = new ArrayList<>();
         
         for (int i = 0; i < nodes; i++) {
-            graph.add(new DirectedGraphNode(i, true, Integer.MAX_VALUE));
+            graph.add(new DirectedGraphNode(i, Integer.MAX_VALUE));
         }
         
         for (int i = 0; i < 6 * nodes; i++) {
@@ -57,10 +57,7 @@ public final class DirectedGraphBuilder {
                     minimumDelay;
             
             DirectedGraphNode delayedDirectedGraphNode = 
-                    new DirectedGraphNode(
-                            id, 
-                            true,
-                            delayMilliseconds);
+                    new DirectedGraphNode(id, delayMilliseconds);
             
             DirectedGraphNode nondelayedDirectedGraphNode =
                     new DirectedGraphNode(id);
@@ -142,10 +139,7 @@ public final class DirectedGraphBuilder {
                     minimumDelay;
             
             DirectedGraphNode delayedDirectedGraphNode = 
-                    new DirectedGraphNode(
-                            id, 
-                            true,
-                            delayMilliseconds);
+                    new DirectedGraphNode(id, delayMilliseconds);
             
             DirectedGraphNode nondelayedDirectedGraphNode =
                     new DirectedGraphNode(id);
