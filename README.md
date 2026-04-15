@@ -31,7 +31,7 @@ List<DirectedGraphNode> path;
 path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder
     .withPathFinder(finder)
     .withSourceNode(source)
-    .withTargetNode(t)
+    .withTargetNode(target)
     .withUndirectedGraphNodeExpander(expander1)
     .search();
 
@@ -39,7 +39,7 @@ path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder
 path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder
     .withPathFinder(finder)
     .withSourceNode(source)
-    .withTargetNode(t)
+    .withTargetNode(target)
     .withForwardNodeExpander(expander1)
     .withBackwardNodeExpander(expander2)
     .search();
@@ -48,7 +48,7 @@ path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder
 path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder
     .withPathFinder(finder)
     .withSourceNode(source)
-    .withTargetNode(t)
+    .withTargetNode(target)
     .withUndirectedGraphNodeExpander(expander1)
     .withSharedSearchProgressListener(null)
     .withForwardSearchProgressListener(null)
@@ -59,7 +59,7 @@ path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder
 path = ThreadPoolBidirectionalBFSPathFinderSearchBuilder
     .withPathFinder(finder)
     .withSourceNode(source)
-    .withTargetNode(t)
+    .withTargetNode(target)
     .withForwardNodeExpander(expander1)
     .withBackwardNodeExpander(expander2)
     .withSharedSearchProgressListener(null)
