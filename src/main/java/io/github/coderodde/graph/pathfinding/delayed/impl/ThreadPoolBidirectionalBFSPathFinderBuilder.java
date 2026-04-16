@@ -1,16 +1,6 @@
 package io.github.coderodde.graph.pathfinding.delayed.impl;
 
-import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_NUMBER_OF_MASTER_TRIALS;
-import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_NUMBER_OF_THREADS;
-import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_NUMBER_OF_THREADS;
-import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_MASTER_THREAD_SLEEP_DURATION_NANOS;
-import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_SLAVE_THREAD_SLEEP_DURATION_NANOS;
-import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_EXPANSION_JOIN_DURATION_NANOS;
-import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.DEFAULT_LOCK_WAIT_NANOS;
-import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_MASTER_THREAD_SLEEP_DURATION_NANOS;
-import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_EXPANSION_JOIN_DURATION_NANOS;
-import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_LOCK_WAIT_NANOS;
-import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.MINIMUM_NUMBER_OF_MASTER_TRIALS;
+import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.*;
 
 /**
  * @version 2.0.0 (Apr 24, 2024)
@@ -34,7 +24,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderBuilder<N> {
         long expansionJoinDurationNanos = 
                 DEFAULT_EXPANSION_JOIN_DURATION_NANOS;
         
-        long lockWaitNanos = DEFAULT_LOCK_WAIT_NANOS;
+//        long lockWaitNanos = DEFAULT_LOCK_WAIT_NANOS;
     }
     
     /**
@@ -201,35 +191,35 @@ public final class ThreadPoolBidirectionalBFSPathFinderBuilder<N> {
             return this;
         }
         
-        /**
-         * Selects lock wait timeout in milliseconds.
-         * 
-         * @param lockWaitMillis the lock wait in milliseconds.
-         * 
-         * @return this builder. 
-         */
-        public Builder<N> withLockWaitMillis(
-                int lockWaitMillis) {
-            settings.lockWaitNanos = 
-                    Math.max((long)(lockWaitMillis) * 1_000_000L, 
-                             MINIMUM_LOCK_WAIT_NANOS);
-                    
-            return this;
-        }
+//        /**
+//         * Selects lock wait timeout in milliseconds.
+//         * 
+//         * @param lockWaitMillis the lock wait in milliseconds.
+//         * 
+//         * @return this builder. 
+//         */
+//        public Builder<N> withLockWaitMillis(
+//                int lockWaitMillis) {
+//            settings.lockWaitNanos = 
+//                    Math.max((long)(lockWaitMillis) * 1_000_000L, 
+//                             MINIMUM_LOCK_WAIT_NANOS);
+//                    
+//            return this;
+//        }
         
-        /**
-         * Selects lock wait timeout in nanoseconds.
-         * 
-         * @param lockWaitNanos the lock wati in nanoseconds.
-         * 
-         * @return this builder.
-         */
-        public Builder<N> withLockWaitNanos(long lockWaitNanos) {
-            settings.lockWaitNanos = 
-                    Math.max(lockWaitNanos, MINIMUM_LOCK_WAIT_NANOS);
-                    
-            return this;
-        }
+//        /**
+//         * Selects lock wait timeout in nanoseconds.
+//         * 
+//         * @param lockWaitNanos the lock wati in nanoseconds.
+//         * 
+//         * @return this builder.
+//         */
+//        public Builder<N> withLockWaitNanos(long lockWaitNanos) {
+//            settings.lockWaitNanos = 
+//                    Math.max(lockWaitNanos, MINIMUM_LOCK_WAIT_NANOS);
+//                    
+//            return this;
+//        }
         
         /**
          * Builds the path finder.
@@ -243,8 +233,8 @@ public final class ThreadPoolBidirectionalBFSPathFinderBuilder<N> {
                     settings.masterThreadSleepDurationNanos,
                     settings.slaveThreadSleepDurationNanos,
                     settings.numberOfMasterTrials,
-                    settings.expansionJoinDurationNanos,
-                    settings.lockWaitNanos);
+                    settings.expansionJoinDurationNanos/*,
+                    settings.lockWaitNanos*/);
         }
     }
 }

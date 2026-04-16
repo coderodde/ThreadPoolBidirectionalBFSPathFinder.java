@@ -54,7 +54,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                         SLAVE_THREAD_SLEEP_DURATION_MILLIS)
                 .withNumberOfMasterTrials(MASTER_THREAD_TRIALS)
                 .withExpansionDurationMillis(EXPANSION_JOIN_DURATION_MILLIS)
-                .withLockWaitMillis(LOCK_WAIT_DURATION_MILLIS)
+//                .withLockWaitMillis(LOCK_WAIT_DURATION_MILLIS)
                 .end();
     
     private final ReferencePathFinder referencePathFinder =

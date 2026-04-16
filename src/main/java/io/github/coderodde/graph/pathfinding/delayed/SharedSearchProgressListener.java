@@ -8,7 +8,7 @@ import java.util.List;
  *
  * @param <N> the actual node type.
  */
-public class SharedSearchProgressListener<N> {
+public abstract class SharedSearchProgressListener<N> {
     
     /**
      * This method should be called whenever the search is initiated.

@@ -50,7 +50,7 @@ public class DirectionProgressListener<N> {
     /**
      * The list of expansion entries.
      */
-    private final List<ExpansionEntry> expansionEntries = new ArrayList<>();
+    protected final List<ExpansionEntry> expansionEntries = new ArrayList<>();
     
     /**
      * Caches the sum of all expansion durations.
@@ -109,7 +109,7 @@ public class DirectionProgressListener<N> {
     public double getMeanExpansionDuration() {
         if (expansionEntries.isEmpty()) {
             throw new IllegalStateException(
-                    "The expansion entry list is empty");
+                    "The expansion entry list is empty.");
         }
         
         return (double) sumOfExpansionDurations / 

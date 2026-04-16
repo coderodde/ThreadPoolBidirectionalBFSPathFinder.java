@@ -89,13 +89,14 @@ extends AbstractDelayedGraphPathFinder<N> {
     /**
      * The default number of nanoseconds to wait on thread joining.
      */
-    public static final long DEFAULT_EXPANSION_JOIN_DURATION_NANOS = 1_000_000L;
+    public static final long DEFAULT_EXPANSION_JOIN_DURATION_NANOS = 
+            4_000_000_000L;
     
     /**
-     * The default number of nanoseconds to wait for the lock. 
+     * The default number of nanoseconds to wait on thread joining.
      */
-    public static final long DEFAULT_LOCK_WAIT_NANOS = 5_000_000L;
-
+    public static final int DEFAULT_EXPANSION_JOIN_DURATION_MILLIS = 4_000;
+    
     /**
      * The minimum number of nanoseconds a <b>master thread</b> sleeps when it 
      * finds the frontier queue empty.
@@ -155,7 +156,7 @@ extends AbstractDelayedGraphPathFinder<N> {
     /**
      * The maximum number of nanoseconds to wait for the lock.
      */
-    private final long lockWaitDurationNanos;
+//    private final long lockWaitDurationNanos;
     
     /**
      * Indicates whether the current search is halted.
@@ -212,7 +213,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             final long slaveThreadSleepDurationNanos,
             final int  masterThreadTrials,
             final long expansionThreadJoinDurationNanos,
-            final long lockWaitDurationNanos,
+//            final long lockWaitDurationNanos,
             final SharedSearchProgressListener<N> sharedProgressListener,
             final DirectionProgressListener<N> forwardProgressListener,
             final DirectionProgressListener<N> backwardProgressListener) {
@@ -239,9 +240,9 @@ extends AbstractDelayedGraphPathFinder<N> {
                 Math.max(expansionThreadJoinDurationNanos,
                          MINIMUM_EXPANSION_JOIN_DURATION_NANOS);
         
-        this.lockWaitDurationNanos = 
-                Math.max(lockWaitDurationNanos,
-                         MINIMUM_LOCK_WAIT_NANOS);
+//        this.lockWaitDurationNanos = 
+//                Math.max(lockWaitDurationNanos,
+//                         MINIMUM_LOCK_WAIT_NANOS);
         
         this.sharedSearchProgressListener = sharedProgressListener;
         this.forwardProgressLogger  = forwardProgressListener;
@@ -273,8 +274,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             final long masterThreadSleepDurationNanos,
             final long slaveThreadSleepDurationNanos,
             final int  masterThreadTrials,
-            final long expansionThreadJoinDurationNanos,
-            final long lockWaitDurationNanos) {
+            final long expansionThreadJoinDurationNanos) {
         
         this(numberOfForwardThreads,
              numberOfBackwardThreads,
@@ -282,7 +282,7 @@ extends AbstractDelayedGraphPathFinder<N> {
              slaveThreadSleepDurationNanos,
              masterThreadTrials,
              expansionThreadJoinDurationNanos,
-             lockWaitDurationNanos,
+//             lockWaitDurationNanos,
              null,
              null,
              null);
@@ -303,8 +303,7 @@ extends AbstractDelayedGraphPathFinder<N> {
              DEFAULT_MASTER_THREAD_SLEEP_DURATION_NANOS,
              DEFAULT_SLAVE_THREAD_SLEEP_DURATION_NANOS,
              DEFAULT_NUMBER_OF_MASTER_TRIALS,
-             DEFAULT_EXPANSION_JOIN_DURATION_NANOS,
-             DEFAULT_LOCK_WAIT_NANOS);
+             DEFAULT_EXPANSION_JOIN_DURATION_NANOS);
     }
     
     /**
@@ -360,9 +359,9 @@ extends AbstractDelayedGraphPathFinder<N> {
         return expansionJoinDurationNanos;
     }
 
-    public long getLockWaitDurationNanos() {
-        return lockWaitDurationNanos;
-    }
+//    public long getLockWaitDurationNanos() {
+//        return lockWaitDurationNanos;
+//    }
 
     /**
      * {@inheritDoc }
