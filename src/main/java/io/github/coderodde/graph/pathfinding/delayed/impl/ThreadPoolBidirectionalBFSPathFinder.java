@@ -622,6 +622,8 @@ extends AbstractDelayedGraphPathFinder<N> {
         @Override
         public void run() {
             try {
+//                System.out.printf("[INFO] Frontier size: %d%n", );
+                
                 successorList = expander.generateSuccessors(node);
             } catch (final Exception ex) {
                 LOGGER.log(Level.SEVERE, 
@@ -860,6 +862,11 @@ extends AbstractDelayedGraphPathFinder<N> {
             queue.addLast(initialNode);
             parents.put(initialNode, null);
             distances.put(initialNode, 0);
+        }
+        
+        // TODO: Javadoc?
+        private Deque<N> getSearchFrontierDeque() {
+            return queue;
         }
         
         /**
@@ -1336,6 +1343,9 @@ extends AbstractDelayedGraphPathFinder<N> {
             }
             
             if (expansionThread.getSuccessorList() == null) {
+                System.out.printf(
+                    "[INFO] Search frontier size: %d.%n", 
+                    searchState.getSearchFrontierDeque().size());
                 // Nothing to do:
                 return;
             }
