@@ -577,8 +577,9 @@ extends AbstractDelayedGraphPathFinder<N> {
         }
 
         INSTANCE_MAP.remove(this);
-        
+        sharedSearchState.lock();
         List<N> path = sharedSearchState.getShortestPath();
+        sharedSearchState.unlock();
         
         if (sharedSearchProgressListener != null) {
             if (path.isEmpty()) {
@@ -623,7 +624,8 @@ extends AbstractDelayedGraphPathFinder<N> {
         public void run() {
             try {
 //                System.out.printf("[INFO] Frontier size: %d%n", );
-                
+                // Don't abuse wikipedia API:
+//                mysleep(10_000_000L);
                 successorList = expander.generateSuccessors(node);
             } catch (final Exception ex) {
                 LOGGER.log(Level.SEVERE, 
@@ -835,13 +837,13 @@ extends AbstractDelayedGraphPathFinder<N> {
          * The set of all the threads working on this particular direction.
          */
         private final Set<AbstractSearchThread<N>> runningThreadSet = 
-                Collections.synchronizedSet(new HashSet<>());
+                new HashSet<>();
 
         /**
          * The set of all <b>slave</b> threads that are currently sleeping.
          */
         private final Set<AbstractSearchThread<N>> sleepingThreadSet =
-                Collections.synchronizedSet(new HashSet<>());
+                new HashSet<>();
         
         /**
          * The mutex for controlling access to the thread sets
@@ -1177,6 +1179,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 }
                 
                 if (isMasterThread) {
+                    
                     processCurrentInMasterThread();
                 } else {
                     processCurrentInSlaveThread();
@@ -1228,6 +1231,8 @@ extends AbstractDelayedGraphPathFinder<N> {
             final N head = searchState.peekQueueHead();
             unlock();
             
+            searchState.wakeupAllSleepingThreads();
+            
             if (head != null) {
                 return;
             }
@@ -1259,8 +1264,17 @@ extends AbstractDelayedGraphPathFinder<N> {
          * Processes the queue head node in a slave thread.
          */
         private void processCurrentInSlaveThread() {
+            if (sharedSearchState.globalHaltRequested()) {
+                return;
+            }
+            
+            if (sleepRequested) {
+                mysleep(threadSleepDurationNanos);
+                return;
+            }
+            
             lock();
-            final N current = searchState.peekQueueHead();
+            final N current = searchState.removeQueueHead();
             unlock();
             
             if (current == null) {
@@ -1268,6 +1282,8 @@ extends AbstractDelayedGraphPathFinder<N> {
                 searchState.putThreadToSleep(this);
                 return;
             }
+            
+            searchState.wakeupAllSleepingThreads();
             
             lock();
             sharedSearchState.updateTouchNode(current);
@@ -1277,7 +1293,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 sharedSearchState.requestGlobalHalt();
                 // Wake all the search threads so that the can read the halt 
                 // flag:
-                searchState.wakeupAllSleepingThreads();
+//                searchState.wakeupAllSleepingThreads();
                 return;
             }
             
@@ -1288,7 +1304,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             final long startTime = System.currentTimeMillis();
             
             // Removes the queue head node from the queue and expands it:
-            expand();
+            expand(current);
             
             final long endTime = System.currentTimeMillis();
             final long expansionDuration = endTime - startTime;
@@ -1317,11 +1333,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          * 
          * @param current the node of which to generate the successor nodes.
          */
-        private void expand() {
-            lock();
-            final N current = searchState.removeQueueHead();
-            unlock();
-            
+        private void expand(final N current) {
             if (current == null) {
                 // Once here, nothing to do:
                 return;
@@ -1348,6 +1360,9 @@ extends AbstractDelayedGraphPathFinder<N> {
                     searchState.getSearchFrontierDeque().size());
                 // Nothing to do:
                 return;
+            } else {
+                List<N> lst = expansionThread.getSuccessorList();
+                System.out.println("TEST: " + lst.subList(0, Math.min(3, lst.size())));
             }
             
             lock();
