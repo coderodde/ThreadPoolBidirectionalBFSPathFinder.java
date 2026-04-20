@@ -115,11 +115,6 @@ extends AbstractDelayedGraphPathFinder<N> {
     static final long MINIMUM_EXPANSION_JOIN_DURATION_NANOS = 1_000_000L;
     
     /**
-     * The minimum number of nanoseconds to wait for the lock.
-     */
-    static final long MINIMUM_LOCK_WAIT_NANOS = 1_000L;
-
-    /**
      * Caches the requested number of forward threads to use in the search 
      * process.
      */
@@ -152,11 +147,6 @@ extends AbstractDelayedGraphPathFinder<N> {
      * The maximum number of nanoseconds for waiting the expansion thread.
      */
     private final long expansionJoinDurationNanos;
-    
-    /**
-     * The maximum number of nanoseconds to wait for the lock.
-     */
-//    private final long lockWaitDurationNanos;
     
     /**
      * Indicates whether the current search is halted.
@@ -200,8 +190,6 @@ extends AbstractDelayedGraphPathFinder<N> {
      *                           search.
      * @param expansionThreadJoinDurationNanos the number of milliseconds to 
      *                                         wait for the expansion thread.
-     * @param lockWaitDurationNanos the number of milliseconds to wait for the 
-     *                              lock.
      * @param sharedProgressListener the shared search progress listener.
      * @param forwardProgressListener  the forward search progress listener.
      * @param backwardProgressListener the backward search progress listener.
@@ -213,7 +201,6 @@ extends AbstractDelayedGraphPathFinder<N> {
             final long slaveThreadSleepDurationNanos,
             final int  masterThreadTrials,
             final long expansionThreadJoinDurationNanos,
-//            final long lockWaitDurationNanos,
             final SharedSearchProgressListener<N> sharedProgressListener,
             final DirectionProgressListener<N> forwardProgressListener,
             final DirectionProgressListener<N> backwardProgressListener) {
@@ -239,10 +226,6 @@ extends AbstractDelayedGraphPathFinder<N> {
         this.expansionJoinDurationNanos = 
                 Math.max(expansionThreadJoinDurationNanos,
                          MINIMUM_EXPANSION_JOIN_DURATION_NANOS);
-        
-//        this.lockWaitDurationNanos = 
-//                Math.max(lockWaitDurationNanos,
-//                         MINIMUM_LOCK_WAIT_NANOS);
         
         this.sharedSearchProgressListener = sharedProgressListener;
         this.forwardProgressLogger  = forwardProgressListener;
@@ -282,7 +265,6 @@ extends AbstractDelayedGraphPathFinder<N> {
              slaveThreadSleepDurationNanos,
              masterThreadTrials,
              expansionThreadJoinDurationNanos,
-//             lockWaitDurationNanos,
              null,
              null,
              null);
@@ -358,10 +340,6 @@ extends AbstractDelayedGraphPathFinder<N> {
     public long getExpansionJoinDurationNanos() {
         return expansionJoinDurationNanos;
     }
-
-//    public long getLockWaitDurationNanos() {
-//        return lockWaitDurationNanos;
-//    }
 
     /**
      * {@inheritDoc }
@@ -623,9 +601,6 @@ extends AbstractDelayedGraphPathFinder<N> {
         @Override
         public void run() {
             try {
-//                System.out.printf("[INFO] Frontier size: %d%n", );
-                // Don't abuse wikipedia API:
-//                mysleep(10_000_000L);
                 successorList = expander.generateSuccessors(node);
             } catch (final Exception ex) {
                 LOGGER.log(Level.SEVERE, 
@@ -846,6 +821,11 @@ extends AbstractDelayedGraphPathFinder<N> {
                 new HashSet<>();
         
         /**
+         * The number of active expansion threads running.
+         */
+        private int activeExpansions = 0;
+        
+        /**
          * The mutex for controlling access to the thread sets
          * (woke up/sleeping).
          */
@@ -866,7 +846,11 @@ extends AbstractDelayedGraphPathFinder<N> {
             distances.put(initialNode, 0);
         }
         
-        // TODO: Javadoc?
+        /**
+         * Returns the frontier queue.
+         * 
+         * @return the frontier queue.
+         */
         private Deque<N> getSearchFrontierDeque() {
             return queue;
         }
@@ -1008,6 +992,18 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             sleepingThreadSet.clear();
             unlockThreadSetMutex();
+        }
+        
+        private void incrementActiveExpansions() {
+            ++activeExpansions;
+        }
+        
+        private void decrementActiveExpansions() {
+            --activeExpansions;
+        }
+        
+        private boolean hasActiveExpansions() {
+            return activeExpansions > 0;
         }
     }
 
@@ -1227,31 +1223,37 @@ extends AbstractDelayedGraphPathFinder<N> {
          * @param head the candidate frontier queue head node.
          */
         private void processCurrentInMasterThread() {
+            N head;
+            boolean hasActiveExpansions;
+            
             lock();
-            final N head = searchState.peekQueueHead();
+            head = searchState.peekQueueHead();
+            hasActiveExpansions = searchState.hasActiveExpansions();
             unlock();
             
             searchState.wakeupAllSleepingThreads();
             
-            if (head != null) {
+            if (head != null || hasActiveExpansions) {
                 return;
             }
             
             N currentHead = null;
+            boolean currentHasActiveExpansions = false;
             
             for (int i = 0; i < threadSleepTrials; ++i) {
                 mysleep(threadSleepDurationNanos);
                 
                 lock();
                 currentHead = searchState.peekQueueHead();
+                currentHasActiveExpansions = searchState.hasActiveExpansions();
                 unlock();
                 
-                if (currentHead != null) {
+                if (currentHead != null || currentHasActiveExpansions) {
                     break;
                 }
             }
             
-            if (currentHead == null) {
+            if (currentHead == null && !currentHasActiveExpansions) {
                 // No new nodes in the queue. Abandon search:
                 sharedSearchState.requestGlobalHalt();
             } else {
@@ -1339,53 +1341,69 @@ extends AbstractDelayedGraphPathFinder<N> {
                 return;
             }
             
-            final ExpansionThread<N> expansionThread = 
-                    new ExpansionThread<>(current, nodeExpander);
-            
-            expansionThread.setDaemon(true); // Important!
-            expansionThread.start();
-            
-            try {
-                expansionThread.join(expansionJoinDurationNanos / 1_000_000L, 
-                               (int)(expansionJoinDurationNanos % 1_000_000L));
-            } catch (InterruptedException ex) {
-                // Did not get the response from the node expander:
-                LOGGER.log(Level.SEVERE, "Expansion thread threw: {0}", ex);
-                return;
-            }
-            
-            if (expansionThread.getSuccessorList() == null) {
-                System.out.printf(
-                    "[INFO] Search frontier size: %d.%n", 
-                    searchState.getSearchFrontierDeque().size());
-                // Nothing to do:
-                return;
-            } else {
-                List<N> lst = expansionThread.getSuccessorList();
-                System.out.println("TEST: " + lst.subList(0, Math.min(3, lst.size())));
-            }
-            
             lock();
-            sharedSearchState.updateTouchNode(current);
+            searchState.incrementActiveExpansions();
             unlock();
             
-            // Processes the successors of the current node:
-            for (final N successor : expansionThread.getSuccessorList()) {
-                lock();
-                
-                if (searchState.trySetNodeInfo(successor, current)) {
-                    if (searchProgressListener != null) {
-                        searchProgressListener.onNeighborGeneration(successor);
-                    }
-                } else {
-                    if (searchProgressListener != null) {
-                        searchProgressListener.onNeighborImprovement(successor);
-                    }
-                    
-                    searchState.tryUpdateIfImprovementPossible(successor, 
-                                                               current);
+            try {
+                final ExpansionThread<N> expansionThread = 
+                        new ExpansionThread<>(current, nodeExpander);
+
+                expansionThread.setDaemon(true); // Important!
+                expansionThread.start();
+
+                try {
+//                    System.out.println("yeah " + (expansionJoinDurationNanos));
+                    expansionThread.join(
+                            expansionJoinDurationNanos / 1_000_000L, 
+                      (int)(expansionJoinDurationNanos % 1_000_000L));
+                } catch (InterruptedException ex) {
+                    // Did not get the response from the node expander:
+                    LOGGER.log(Level.SEVERE, "Expansion thread threw: {0}", ex);
+                    return;
                 }
-                
+
+                if (expansionThread.isAlive()) {
+                    LOGGER.log(Level.WARNING,
+                               "Expansion of node \"{0}\" times out.", 
+                               current);
+                    return;
+                }
+
+                final List<N> successors = expansionThread.getSuccessorList();
+
+                if (successors == null) {
+                    return;
+                }
+
+                lock();
+                sharedSearchState.updateTouchNode(current);
+                unlock();
+
+                // Processes the successors of the current node:
+                for (final N successor : successors) {
+                    lock();
+
+                    if (searchState.trySetNodeInfo(successor, current)) {
+                        if (searchProgressListener != null) {
+                            searchProgressListener
+                                    .onNeighborGeneration(successor);
+                        }
+                    } else {
+                        if (searchProgressListener != null) {
+                            searchProgressListener
+                                    .onNeighborImprovement(successor);
+                        }
+
+                        searchState.tryUpdateIfImprovementPossible(successor, 
+                                                                   current);
+                    }
+
+                    unlock();
+                }
+            } finally {
+                lock();
+                searchState.decrementActiveExpansions();
                 unlock();
             }
         }
