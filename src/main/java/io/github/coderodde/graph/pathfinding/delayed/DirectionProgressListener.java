@@ -116,6 +116,19 @@ public class DirectionProgressListener<N> {
                (double) expansionEntries.size();
     }
     
+    public double getExpansionDurationStandardDeviation() {
+        // getMeanExpansionDuration() will make sure that the entry list is not
+        // empty.
+        final double mean = getMeanExpansionDuration();
+        double sum = 0.0;
+        
+        for (final ExpansionEntry e : expansionEntries) {
+            sum += Math.pow(e.getDurationMillis() - mean, 2.0);
+        }
+        
+        return Math.sqrt(sum / expansionEntries.size());
+    }
+    
     /**
      * This method should be called whenever the search is generating a neighbor
      * node of the node being expanded.
