@@ -12,7 +12,7 @@ import java.util.NoSuchElementException;
  * 
  * @param <N> the type of the actual datum being stored in the heap.
  */
-final class IntBinaryHeap<N> {
+public final class LongBinaryHeap<N> {
 
     /**
      * This class implements the binary heap entry.
@@ -29,7 +29,7 @@ final class IntBinaryHeap<N> {
         /**
          * The integer priority of {@code datum}.
          */
-        int priority;
+        long priority;
 
         /**
          * The index at which this entry is located in the {@code table} array.
@@ -37,7 +37,7 @@ final class IntBinaryHeap<N> {
         int index;
 
         IntBinaryHeapEntry(final N datum,
-                           final int priority, 
+                           final long priority, 
                            final int index) {
             this.datum    = datum;
             this.priority = priority;
@@ -61,7 +61,7 @@ final class IntBinaryHeap<N> {
      * @param datum    the datum to store in this heap.
      * @param priority the priority of the new datum.
      */
-    void insert(final N datum, final int priority) {
+    public void insert(final N datum, final long priority) {
         if (map.containsKey(datum)) {
             throw new IllegalArgumentException("Duplicate datum: " + datum);
         }
@@ -83,8 +83,21 @@ final class IntBinaryHeap<N> {
      * 
      * @return a Boolean flag.
      */
-    boolean containsDatum(final N datum) {
+    public boolean containsDatum(final N datum) {
         return map.containsKey(datum);
+    }
+    
+    /**
+     * Returns but does not remove the highest priority datum.
+     * 
+     * @return the topmost datum.
+     */
+    public N top() {
+        if (map.isEmpty()) {
+            throw new NoSuchElementException("Peeking to empty heap.");
+        }
+        
+        return table.getFirst().datum;
     }
     
     /**
@@ -94,7 +107,7 @@ final class IntBinaryHeap<N> {
      * 
      * @return the datum with highest priority. 
      */
-    N extract() {
+    public N extract() {
         if (table.isEmpty()) {
             throw new NoSuchElementException("Extracting from empty heap.");
         }
@@ -119,14 +132,14 @@ final class IntBinaryHeap<N> {
      * @param datum    the target datum.
      * @param priority the new priority.
      */
-    void changePriority(final N datum, final int priority) {
+    public void changePriority(final N datum, final long priority) {
         final IntBinaryHeapEntry<N> entry = map.get(datum);
         
         if (entry == null) {
             return;
         }
         
-        final int oldPriority = entry.priority;
+        final long oldPriority = entry.priority;
         entry.priority = priority;
         
         if (priority < oldPriority) {
@@ -141,8 +154,17 @@ final class IntBinaryHeap<N> {
      * 
      * @return the number of datums stored in this heap.
      */
-    int size() {
+    public int size() {
         return map.size();
+    }
+    
+    /**
+     * Returns {@code true} only if this heap is empty.
+     * 
+     * @return {@code true} if this heap is empty, {@code false} otherwise.
+     */
+    public boolean isEmpty() {
+        return map.isEmpty();
     }
     
     /**
@@ -156,13 +178,13 @@ final class IntBinaryHeap<N> {
         }
         
         final IntBinaryHeapEntry<N> targetEntry = table.get(index);
-        final int targetEntryPriority = targetEntry.priority;
+        final long targetEntryPriority = targetEntry.priority;
         
         int parentEntryIndex = getParentIndex(index);
         
         while (true) {
             final IntBinaryHeapEntry<N> parentEntry = table.get(parentEntryIndex);
-            final int parentEntryPriority = parentEntry.priority;
+            final long parentEntryPriority = parentEntry.priority;
         
             if (targetEntryPriority < parentEntryPriority) {
                 table.set(index, parentEntry);
@@ -184,7 +206,7 @@ final class IntBinaryHeap<N> {
 
     private void siftDown(int index) {
         final IntBinaryHeapEntry<N> targetEntry = table.get(index);
-        final int targetEntryPriority = targetEntry.priority;
+        final long targetEntryPriority = targetEntry.priority;
 
         while (true) {
             final int leftChildEntryIndex = getLeftChildIndex(index);

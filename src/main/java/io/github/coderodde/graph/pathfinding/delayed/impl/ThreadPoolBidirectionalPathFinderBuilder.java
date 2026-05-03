@@ -3,10 +3,11 @@ package io.github.coderodde.graph.pathfinding.delayed.impl;
 import static io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder.*;
 
 /**
- * @version 2.0.0 (Apr 24, 2024)
- * @since 1.0.0 (March 17, 2024)
+ * This class provides a builder for path finders.
+ * 
+ * @param <N> the graph node type.
  */
-public final class ThreadPoolBidirectionalBFSPathFinderBuilder<N> {
+public final class ThreadPoolBidirectionalPathFinderBuilder<N> {
     
     private static final class Settings {
         int numberOfForwardThreads = DEFAULT_NUMBER_OF_THREADS;
@@ -23,8 +24,6 @@ public final class ThreadPoolBidirectionalBFSPathFinderBuilder<N> {
         
         long expansionJoinDurationNanos = 
                 DEFAULT_EXPANSION_JOIN_DURATION_NANOS;
-        
-//        long lockWaitNanos = DEFAULT_LOCK_WAIT_NANOS;
     }
     
     /**
@@ -191,50 +190,34 @@ public final class ThreadPoolBidirectionalBFSPathFinderBuilder<N> {
             return this;
         }
         
-//        /**
-//         * Selects lock wait timeout in milliseconds.
-//         * 
-//         * @param lockWaitMillis the lock wait in milliseconds.
-//         * 
-//         * @return this builder. 
-//         */
-//        public Builder<N> withLockWaitMillis(
-//                int lockWaitMillis) {
-//            settings.lockWaitNanos = 
-//                    Math.max((long)(lockWaitMillis) * 1_000_000L, 
-//                             MINIMUM_LOCK_WAIT_NANOS);
-//                    
-//            return this;
-//        }
-        
-//        /**
-//         * Selects lock wait timeout in nanoseconds.
-//         * 
-//         * @param lockWaitNanos the lock wati in nanoseconds.
-//         * 
-//         * @return this builder.
-//         */
-//        public Builder<N> withLockWaitNanos(long lockWaitNanos) {
-//            settings.lockWaitNanos = 
-//                    Math.max(lockWaitNanos, MINIMUM_LOCK_WAIT_NANOS);
-//                    
-//            return this;
-//        }
-        
         /**
-         * Builds the path finder.
+         * Builds the path finder relying on the breadth-first search.
          * 
          * @return the path finder.
          */
-        public ThreadPoolBidirectionalBFSPathFinder<N> end() {
+        public ThreadPoolBidirectionalBFSPathFinder<N> bfs() {
             return new ThreadPoolBidirectionalBFSPathFinder<>(
                     settings.numberOfForwardThreads,
                     settings.numberOfBackwardThreads,
                     settings.masterThreadSleepDurationNanos,
                     settings.slaveThreadSleepDurationNanos,
                     settings.numberOfMasterTrials,
-                    settings.expansionJoinDurationNanos/*,
-                    settings.lockWaitNanos*/);
+                    settings.expansionJoinDurationNanos);
+        }
+        
+        /**
+         * Builds the path finder relying on the Dijkstra's algorithm.
+         * 
+         * @return the path finder.
+         */
+        public ThreadPoolBidirectionalDijkstraPathFinder<N> dijkstra() {
+            return new ThreadPoolBidirectionalDijkstraPathFinder<>(
+                    settings.numberOfForwardThreads,
+                    settings.numberOfBackwardThreads,
+                    settings.masterThreadSleepDurationNanos,
+                    settings.slaveThreadSleepDurationNanos,
+                    settings.numberOfMasterTrials,
+                    settings.expansionJoinDurationNanos);
         }
     }
 }

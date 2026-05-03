@@ -4,11 +4,9 @@ import io.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFin
 import io.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import io.github.coderodde.graph.pathfinding.delayed.DirectionProgressListener;
 import io.github.coderodde.graph.pathfinding.delayed.SharedSearchProgressListener;
-import java.util.ArrayDeque;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,19 +19,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * This class implements a parallel, bidirectional breadth-first search in order
- * to find an unweighted (not necessarily <b>shortest</b>) path from a given
- * source node to a given target node. The underlying algorithm is the 
- * bidirectional breadth-first search. However, multiple threads may work on a 
- * single search direction in order to speed up the computation: for each search 
- * direction (forward and backward), the algorithm maintains concurrent state, 
- * such as the frontier queue; many threads may pop the queue, expand the node 
- * and append the neighbours to that queue.
- * 
- * Basically, this concurrent algoirthm solves the <i>earliest path problem</i>.
- * The algorithm should benefit from multithreading in case the input graph is
- * <i>delayed</i>, i.e., generating successors of a node takes substantial time
- * such as, for example, half a second.
+ * This class implements a parallel, bidirectional Dijkstra's algorithm  in 
+ * order to find an <i>earliest</i> path from a given source node to a given 
+ * target node in graphs where expanding a node may take a time hit (for 
+ * example, milliseconds).
  * 
  * @param <N> the actual graph node type.
  */
@@ -583,7 +572,11 @@ extends AbstractDelayedGraphPathFinder<N> {
     
     @Override
     public boolean wasHalted() {
-        return wasHalted;
+        final SharedSearchState<N> sharedSearchState = INSTANCE_MAP.get(this);
+        
+        return sharedSearchState != null ? 
+               sharedSearchState.haltRequested : 
+               false;
     }
 
     private static final class ExpansionThread<N> extends Thread {
@@ -646,7 +639,7 @@ extends AbstractDelayedGraphPathFinder<N> {
         /**
          * Caches the best known length from the source node to the target node.
          */
-        private volatile int bestPathLengthSoFar = Integer.MAX_VALUE;
+        private volatile long bestPathLengthSoFar = Long.MAX_VALUE;
         
         /**
          * The best search frontier touch node so far.
@@ -668,14 +661,14 @@ extends AbstractDelayedGraphPathFinder<N> {
                 return false;
             }
             
-            final N forwardSearchHead  = forwardSearchState.peekQueueHead();
-            final N backwardSearchHead = backwardSearchState.peekQueueHead();
+            final N forwardSearchHead  = forwardSearchState.peekOpen();
+            final N backwardSearchHead = backwardSearchState.peekOpen();
             
             if (forwardSearchHead == null || backwardSearchHead == null) {
                 return false;
             }
             
-            final int distance =
+            final long distance =
                     forwardSearchState .getDistanceOf(forwardSearchHead) +
                     backwardSearchState.getDistanceOf(backwardSearchHead);
             
@@ -734,7 +727,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             if (forwardSearchState .containsNode(current) &&
                 backwardSearchState.containsNode(current)) {
                 
-                final int currentDistance = 
+                final long currentDistance = 
                         forwardSearchState .getDistanceOf(current) +
                         backwardSearchState.getDistanceOf(current);
                 
@@ -795,12 +788,12 @@ extends AbstractDelayedGraphPathFinder<N> {
         /**
          * The search frontier FIFO queue.
          */
-        private final Deque<N> queue = new ArrayDeque<>();
+        private final LongBinaryHeap<N> open = new LongBinaryHeap<>();
         
         /**
          * This map maps each discovered node to its best distance estimate.
          */
-        private final Map<N, Integer> distances = new HashMap<>();
+        private final Map<N, Long> distances = new HashMap<>();
         
         /**
          * This map maps each discovered node to its predecessor on the current 
@@ -841,18 +834,9 @@ extends AbstractDelayedGraphPathFinder<N> {
          *                    node should be the target node.
          */
         private SearchState(final N initialNode) {
-            queue.addLast(initialNode);
+            open.insert(initialNode, 0L);
             parents.put(initialNode, null);
-            distances.put(initialNode, 0);
-        }
-        
-        /**
-         * Returns the frontier queue.
-         * 
-         * @return the frontier queue.
-         */
-        private Deque<N> getSearchFrontierDeque() {
-            return queue;
+            distances.put(initialNode, 0L);
         }
         
         /**
@@ -874,7 +858,7 @@ extends AbstractDelayedGraphPathFinder<N> {
          * 
          * @return the best known distance to {@code node}.
          */
-        private int getDistanceOf(final N node) {
+        private long getDistanceOf(final N node) {
             return distances.get(node);
         }
         
@@ -884,8 +868,12 @@ extends AbstractDelayedGraphPathFinder<N> {
          * 
          * @return the queue head node.
          */
-        private N peekQueueHead() {
-            return queue.peekFirst();
+        private N peekOpen() {
+            if (open.size() == 0) {
+                return null;
+            }
+            
+            return open.top();
         }
         
         /**
@@ -894,12 +882,12 @@ extends AbstractDelayedGraphPathFinder<N> {
          * 
          * @return the queue head node. 
          */
-        private N removeQueueHead() {
-            if (queue.isEmpty()) {
+        private N extractOpen() {
+            if (open.size() == 0) {
                 return null;
             }
             
-            return queue.remove();
+            return open.extract();
         }
         
         /**
@@ -919,7 +907,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             
             distances.put(current, getDistanceOf(predecessor) + 1);
             parents.put(current, predecessor);
-            queue.addLast(current);
+            open.insert(current, distances.get(current));
             return true;
         }
         
@@ -931,10 +919,13 @@ extends AbstractDelayedGraphPathFinder<N> {
          */
         private void tryUpdateIfImprovementPossible(
             final N node, 
-            final N predecessor) {
+            final N predecessor,
+            final long weight) {
+            final long tentativeScore = distances.get(predecessor) + weight;
             
-            if (distances.get(node) > distances.get(predecessor) + 1) { 
-                distances.put(node,   distances.get(predecessor) + 1);
+            if (distances.get(node) > tentativeScore) { 
+                distances.put(node,   tentativeScore);
+                open.changePriority(node, tentativeScore);
                 parents.put(node, predecessor);
             }
         }
@@ -1151,11 +1142,11 @@ extends AbstractDelayedGraphPathFinder<N> {
                   threadSleepTrials, 
                   isMasterThread);
             
-            this.threadId              = id;
-            this.nodeExpander          = nodeExpander;
-            this.searchState           = searchState;
-            this.sharedSearchState     = sharedSearchState;
-            this.searchProgressListener  = searchProgressLogger;
+            this.threadId                   = id;
+            this.nodeExpander               = nodeExpander;
+            this.searchState                = searchState;
+            this.sharedSearchState          = sharedSearchState;
+            this.searchProgressListener     = searchProgressLogger;
             this.expansionJoinDurationNanos = expansionJoinDurationNanos;
         }
 
@@ -1227,7 +1218,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             boolean hasActiveExpansions;
             
             lock();
-            head = searchState.peekQueueHead();
+            head = searchState.peekOpen();
             hasActiveExpansions = searchState.hasActiveExpansions();
             unlock();
             
@@ -1244,7 +1235,7 @@ extends AbstractDelayedGraphPathFinder<N> {
                 mysleep(threadSleepDurationNanos);
                 
                 lock();
-                currentHead = searchState.peekQueueHead();
+                currentHead = searchState.peekOpen();
                 currentHasActiveExpansions = searchState.hasActiveExpansions();
                 unlock();
                 
@@ -1276,7 +1267,7 @@ extends AbstractDelayedGraphPathFinder<N> {
             }
             
             lock();
-            final N current = searchState.removeQueueHead();
+            final N current = searchState.extractOpen();
             unlock();
             
             if (current == null) {
@@ -1352,23 +1343,27 @@ extends AbstractDelayedGraphPathFinder<N> {
                 expansionThread.setDaemon(true); // Important!
                 expansionThread.start();
 
+                final long nanosBeforeExpansion = System.nanoTime();
+                long expansionWeight;
+                
                 try {
-//                    System.out.println("yeah " + (expansionJoinDurationNanos));
                     expansionThread.join(
                             expansionJoinDurationNanos / 1_000_000L, 
                       (int)(expansionJoinDurationNanos % 1_000_000L));
+                    
+                    expansionWeight = System.nanoTime() - nanosBeforeExpansion;
                 } catch (InterruptedException ex) {
                     // Did not get the response from the node expander:
                     LOGGER.log(Level.SEVERE, "Expansion thread threw: {0}", ex);
                     return;
                 }
 
-                if (expansionThread.isAlive()) {
-                    LOGGER.log(Level.WARNING,
-                               "Expansion of node \"{0}\" times out.", 
-                               current);
-                    return;
-                }
+//                if (expansionThread.isAlive()) {
+//                    LOGGER.log(Level.WARNING,
+//                               "Expansion of node \"{0}\" times out.", 
+//                               current);
+//                    return;
+//                }
 
                 final List<N> successors = expansionThread.getSuccessorList();
 
@@ -1379,9 +1374,10 @@ extends AbstractDelayedGraphPathFinder<N> {
                 lock();
                 sharedSearchState.updateTouchNode(current);
                 unlock();
-
+                
                 // Processes the successors of the current node:
                 for (final N successor : successors) {
+                    
                     lock();
 
                     if (searchState.trySetNodeInfo(successor, current)) {
@@ -1395,8 +1391,10 @@ extends AbstractDelayedGraphPathFinder<N> {
                                     .onNeighborImprovement(successor);
                         }
 
-                        searchState.tryUpdateIfImprovementPossible(successor, 
-                                                                   current);
+                        searchState.tryUpdateIfImprovementPossible(
+                            successor, 
+                            current,
+                            expansionWeight);
                     }
 
                     unlock();

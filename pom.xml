@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.coderodde.graph.pathfinding.delayed</groupId>
-    <artifactId>ThreadPoolBidirectionalBFSPathFinder</artifactId>
+    <artifactId>ThreadPoolBidirectionalPathFinder</artifactId>
     <version>1.1.0</version>
     <packaging>jar</packaging>
     
@@ -76,6 +76,6 @@
         <exec.mainClass>com.github.coderodde.graph.FaultyGraphPathfinder</exec.mainClass>
     </properties>
     
-    <name>ThreadPoolBidirectionalBFSPathFinder.java</name>
+    <name>ThreadPoolBidirectionalPathFinder.java</name>
     
 </project>

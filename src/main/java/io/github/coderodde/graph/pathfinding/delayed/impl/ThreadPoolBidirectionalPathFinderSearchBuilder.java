@@ -7,7 +7,7 @@ import io.github.coderodde.graph.pathfinding.delayed.SharedSearchProgressListene
 import java.util.List;
 import java.util.Objects;
 
-public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
+public final class ThreadPoolBidirectionalPathFinderSearchBuilder<N> {
     
     private static final class Settings<N> {
         AbstractDelayedGraphPathFinder<N> finder;
@@ -179,7 +179,9 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
             this.settings = settings;
         }
         
-        public DirectedSearch<N> withBackwardSearchProgressListener(final DirectionProgressListener<N> listener) {
+        public DirectedSearch<N> withBackwardSearchProgressListener(
+                final DirectionProgressListener<N> listener) {
+            
             settings.backwardSearchProgressListener = listener;
             return new DirectedSearch<>(settings);
         }
@@ -205,8 +207,11 @@ public final class ThreadPoolBidirectionalBFSPathFinderSearchBuilder<N> {
         
         public BackwardSearchProgressListenerSelector<N> 
         withForwardSearchProgressLogger(
-                final DirectionProgressListener<N> forwardSearchProgressLogger) {
-            settings.forwardSearchProgressListener = forwardSearchProgressLogger;
+            final DirectionProgressListener<N> forwardSearchProgressLogger) {
+            
+            settings.forwardSearchProgressListener = 
+                    forwardSearchProgressLogger;
+            
             return new BackwardSearchProgressListenerSelector<>(settings);
         }
     }

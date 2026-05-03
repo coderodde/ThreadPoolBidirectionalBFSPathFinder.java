@@ -5,7 +5,7 @@ import io.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
 import java.util.List;
 import org.junit.Test;
 
-public class ThreadPoolBidirectionalBFSPathFinderSearchBuilderTest {
+public class ThreadPoolBidirectionalPathFinderSearchBuilderTest {
 
     private final Integer source = 1; // source
     private final Integer t = 2; // target
@@ -17,14 +17,14 @@ public class ThreadPoolBidirectionalBFSPathFinderSearchBuilderTest {
     @Test
     public void testWithPathFinder() {
         // Passes if does not throw an exception.
-        ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+        ThreadPoolBidirectionalPathFinderSearchBuilder
             .withPathFinder(finder)
             .withSourceNode(source)
             .withTargetNode(t)
             .withUndirectedGraphNodeExpander(expander1)
             .search();
         
-        ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+        ThreadPoolBidirectionalPathFinderSearchBuilder
             .withPathFinder(finder)
             .withSourceNode(source)
             .withTargetNode(t)
@@ -32,7 +32,7 @@ public class ThreadPoolBidirectionalBFSPathFinderSearchBuilderTest {
             .withBackwardNodeExpander(expander2)
             .search();
         
-        ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+        ThreadPoolBidirectionalPathFinderSearchBuilder
             .withPathFinder(finder)
             .withSourceNode(source)
             .withTargetNode(t)
@@ -42,7 +42,7 @@ public class ThreadPoolBidirectionalBFSPathFinderSearchBuilderTest {
             .withBackwardSearchProgressListener(null)
             .search();
         
-        ThreadPoolBidirectionalBFSPathFinderSearchBuilder
+        ThreadPoolBidirectionalPathFinderSearchBuilder
             .withPathFinder(finder)
             .withSourceNode(source)
             .withTargetNode(t)

@@ -5,7 +5,7 @@ import io.github.coderodde.graph.extra.DirectedGraphBuilder;
 import io.github.coderodde.graph.extra.DirectedGraphNode;
 import io.github.coderodde.graph.extra.ForwardNodeExpander;
 import io.github.coderodde.graph.extra.GraphPair;
-import io.github.coderodde.graph.extra.ReferenceBFSPathFinder;
+import io.github.coderodde.graph.extra.ReferenceDijkstraPathFinder;
 import io.github.coderodde.graph.extra.Utils;
 import io.github.coderodde.graph.pathfinding.delayed.AbstractDelayedGraphPathFinder;
 import io.github.coderodde.graph.pathfinding.delayed.AbstractNodeExpander;
@@ -14,7 +14,7 @@ import java.util.Random;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-public final class ThreadPoolBidirectionalBFSPathFinderTest {
+public final class ThreadPoolBidirectionalDijkstraPathFinderTest {
     
     private static final long SEED = 13L;
     private static final int NODES = 100_000;
@@ -53,12 +53,12 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                         SLAVE_THREAD_SLEEP_DURATION_MILLIS)
                 .withNumberOfMasterTrials(MASTER_THREAD_TRIALS)
                 .withExpansionDurationMillis(EXPANSION_JOIN_DURATION_MILLIS)
-                .bfs();
+                .dijkstra();
     
-    private final ReferenceBFSPathFinder referencePathFinder =
-            new ReferenceBFSPathFinder();
+    private final ReferenceDijkstraPathFinder referencePathFinder =
+              new ReferenceDijkstraPathFinder();
     
-    public ThreadPoolBidirectionalBFSPathFinderTest() {
+    public ThreadPoolBidirectionalDijkstraPathFinderTest() {
         final DirectedGraphBuilder directedGraphBuilder = 
                 new DirectedGraphBuilder(
                         NODES, 
@@ -96,6 +96,8 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
     
     @Test
     public void isNotShortestPathAlgo() {
+        System.out.println("--- Begin: isNotShortestPathAlgo()");
+        
         final DirectedGraphNode s = new DirectedGraphNode(0, 500);
         final DirectedGraphNode a = new DirectedGraphNode(1, 5);
         final DirectedGraphNode b = new DirectedGraphNode(2, 15);
@@ -126,6 +128,8 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         assertEquals(b, path.get(2));
         assertEquals(c, path.get(3));
         assertEquals(t, path.get(4));
+        
+        System.out.println("--- End:   isNotShortestPathAlgo()");
     }
     
     @Test
@@ -175,7 +179,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         final DirectedGraphNode delayedGraphTarget =
                 delayedDirectedGraph.get(targetNodeIndex);
 
-        System.out.println("Running ThreadPoolBidirectionalBFSPathFinder...");
+        System.out.println("Running ThreadPoolBidirectionalDijkstraPathFinder...");
         long start = System.currentTimeMillis();
         final List<DirectedGraphNode> testPath = 
                 testPathFinder
@@ -189,14 +193,11 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         
         long end = System.currentTimeMillis();
         
-        System.out.println(
-                "Running ThreadPoolBidirectionalBFSPathFinder done.");
-        
         System.out.printf(
-                "ThreadPoolBidirectionalBFSPathFinder took %d milliseconds.\n", 
+                "ThreadPoolBidirectionalDijkstraPathFinder took %d milliseconds.\n", 
                 end - start);
 
-        System.out.println("ReferencePathFinder...");
+        System.out.println("Running ReferenceDijkstraPathFinder...");
         
         start = System.currentTimeMillis();
         final List<DirectedGraphNode> referencePath = 
@@ -205,8 +206,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         
         end = System.currentTimeMillis();
         
-        System.out.println("Running ReferenceBFSPathFinder done.");
-        System.out.printf("ReferenceBFSPathFinder took %d milliseconds.\n",
+        System.out.printf("ReferenceDijkstraPathFinder took %d milliseconds.\n",
                           end - start);
 
         assertEquals(referencePath.size(), testPath.size());
@@ -214,12 +214,29 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         assertEquals(referencePath.get(referencePath.size() - 1),
                      testPath.get(testPath.size() - 1));
         
+        if (referencePath.size() == testPath.size()) {
+            System.out.println("Reference path:");
+            
+            for (final DirectedGraphNode node : referencePath) {
+                System.out.println(node);
+            }
+            
+            System.out.println();
+            System.out.println("Test path:");
+            
+            for (final DirectedGraphNode node : testPath) {
+                System.out.println(node);
+            }
+        }
+        
         System.out.println("testCorrectness() done.");
     }   
     
     // This test may take a several seconds too complete.
     @Test
     public void returnsEmptyPathOnDisconnectedGraph() {
+        System.out.println("--- Begin: returnsEmptyPathOnDisconnectedGraph()");
+        
         final int nodes = disconnectedDelayedDirectedGraph.size();
         final int sourceNodeIndex = random.nextInt(nodes / 2);
         final int targetNodeIndex = nodes / 2 + random.nextInt(nodes / 2);
@@ -253,11 +270,12 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         assertTrue(referencePath.isEmpty());
         assertTrue(testPath.isEmpty());
         
-        System.out.println("returnsEmptyPathOnDisconnectedGraph() done.");
+        System.out.println("--- End:   returnsEmptyPathOnDisconnectedGraph()");
     }
     
     @Test
     public void haltsOnFailingNodes() {
+        System.out.println("--- Begin: haltsOnFailingNodes()");
         
         final DirectedGraphNode sourceNode = 
                 this.failingNodeGraph
@@ -275,7 +293,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                               null, 
                               null);
         
-        System.out.println("haltsOnFailingNodes() done.");
+        System.out.println("--- End:   haltsOnFailingNodes()");
     }
     
     @Test
@@ -337,7 +355,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                 .withExpansionDurationMillis(1000)
                 .withNumberOfForwardThreads(10)
                 .withNumberOfBackwardThreads(10)
-                .bfs();
+                .dijkstra();
         
         AbstractDelayedGraphPathFinder<DirectedGraphNode> finder2 =
                 ThreadPoolBidirectionalPathFinderBuilder
@@ -345,7 +363,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                 .withExpansionDurationMillis(1000)
                 .withNumberOfForwardThreads(10)
                 .withNumberOfBackwardThreads(10)
-                .bfs();
+                .dijkstra();
         
         final Runnable runnable1 = new Runnable() {
             
@@ -388,17 +406,20 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
         
         Utils.sleep(2000);
         finder2.halt();
+        
         System.out.println("Second finder halted!");
     }
     
     @Test
     public void fluentApiSearchBuilding() {
+        System.out.println("--- Begin: fluentApiSearchBuilding()");
+        
         DirectedGraphNode source = new DirectedGraphNode(1);
         DirectedGraphNode target = new DirectedGraphNode(2);
         
         AbstractDelayedGraphPathFinder<DirectedGraphNode> pathfinder = 
                 ThreadPoolBidirectionalPathFinderBuilder.
-                        <DirectedGraphNode>begin().bfs();
+                        <DirectedGraphNode>begin().dijkstra();
         
         AbstractNodeExpander<DirectedGraphNode> forwardNodeExpander = 
                 new ForwardNodeExpander();
@@ -442,6 +463,8 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                 .withForwardSearchProgressListener(null)
                 .withBackwardSearchProgressListener(null)
                 .search();
+        
+        System.out.println("--- End:   fluentApiSearchBuilding()");
     }
     
     @Test
@@ -467,7 +490,7 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                         <DirectedGraphNode>begin()
                         .withNumberOfForwardThreads(2)
                         .withNumberOfBackwardThreads(2)
-                        .bfs();
+                        .dijkstra();
         
         List<DirectedGraphNode> path = 
                 ThreadPoolBidirectionalPathFinderSearchBuilder
@@ -480,36 +503,5 @@ public final class ThreadPoolBidirectionalBFSPathFinderTest {
                .search();
         
         assertEquals(4, path.size());
-    }
-}
-
-final class FailingForwardNodeExpander
-        extends AbstractNodeExpander<DirectedGraphNode> {
-
-    @Override
-    public List<DirectedGraphNode> generateSuccessors(final DirectedGraphNode node) {
-        Utils.sleep(1_000_000);
-        return node.getChildren();
-    }
-
-    @Override
-    public boolean isValidNode(final DirectedGraphNode node) {
-        return true;
-    }
-}
-
-final class FailingBackwardNodeExpander
-        extends AbstractNodeExpander<DirectedGraphNode> {
-
-    @Override
-    public List<DirectedGraphNode>
-         generateSuccessors(final DirectedGraphNode node) {
-        Utils.sleep(1_000_000);
-        return node.getParents();
-    }
-
-    @Override
-    public boolean isValidNode(final DirectedGraphNode node) {
-        return true;
     }
 }

@@ -5,10 +5,10 @@ import io.github.coderodde.graph.extra.DirectedGraphBuilder;
 import io.github.coderodde.graph.extra.DirectedGraphNode;
 import io.github.coderodde.graph.extra.ForwardNodeExpander;
 import io.github.coderodde.graph.extra.GraphPair;
-import io.github.coderodde.graph.extra.ReferencePathFinder;
+import io.github.coderodde.graph.extra.ReferenceBFSPathFinder;
 import io.github.coderodde.graph.extra.Utils;
 import io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinder;
-import io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalBFSPathFinderBuilder;
+import io.github.coderodde.graph.pathfinding.delayed.impl.ThreadPoolBidirectionalPathFinderBuilder;
 import java.util.List;
 import java.util.Random;
 
@@ -44,7 +44,7 @@ public final class Benchmark {
         System.out.printf("Source node: %s\n", source);
         System.out.printf("Target node: %s\n", target);
         
-        ReferencePathFinder referencePathFinder = new ReferencePathFinder();
+        ReferenceBFSPathFinder referencePathFinder = new ReferenceBFSPathFinder();
         
         long startTime = System.currentTimeMillis();
         
@@ -61,7 +61,7 @@ public final class Benchmark {
         
         ThreadPoolBidirectionalBFSPathFinder<DirectedGraphNode>
                 threadPoolPathFinder = 
-                ThreadPoolBidirectionalBFSPathFinderBuilder
+                ThreadPoolBidirectionalPathFinderBuilder
                         .<DirectedGraphNode>begin()
                         .withExpansionDurationMillis(110)
 //                        .withLockWaitMillis(4)
@@ -70,7 +70,7 @@ public final class Benchmark {
                         .withNumberOfForwardThreads(NUMBER_OF_THREADS / 2)
                         .withNumberOfBackwardThreads(NUMBER_OF_THREADS / 2)
                         .withSlaveThreadSleepDurationMillis(10)
-                        .end();
+                        .bfs();
         
         startTime = System.currentTimeMillis();
         

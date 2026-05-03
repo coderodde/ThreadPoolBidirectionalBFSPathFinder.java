@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-public final class ReferencePathFinder  {
+public final class ReferenceBFSPathFinder  {
 
     private int numberOfExpandedNodes;
     
@@ -37,8 +37,6 @@ public final class ReferencePathFinder  {
         
         final Map<DirectedGraphNode, Integer> distanceMapB =
                 new HashMap<>();
-        
-        int expandedNodes = 0;
         
         queueA.add(source);
         queueB.add(target);
@@ -115,9 +113,10 @@ public final class ReferencePathFinder  {
         return numberOfExpandedNodes;
     }
         
-    private static <N> List<N> tracebackPath(N touchNode, 
-                                             Map<N, N> forwardParentMap,
-                                             Map<N, N> backwardParentMap) {
+    static <N> List<N> tracebackPath(N touchNode, 
+                                     Map<N, N> forwardParentMap,
+                                     Map<N, N> backwardParentMap) {
+        
         final List<N> path = new ArrayList<>();
 
         N current = touchNode;
